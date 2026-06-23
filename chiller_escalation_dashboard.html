@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chiller Plant — Closed-Loop Escalation Dashboard</title>
+<style>
+  :root{
+    --cold:#2f6fed; --warm:#e8833a; --purple:#8e54c4;
+    --ink:#1f2530; --muted:#5b6573; --line:#e4e8ee; --bg:#f7f9fc; --card:#fff;
+    --green:#1c8a4d; --greenbg:#e7f6ed; --amber:#b5760f; --amberbg:#fdf1de; --red:#c12f2f; --redbg:#fbe7e7;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:920px; margin:0 auto; padding:24px 18px 48px;}
+  .stagetag{display:inline-block; font-size:12px; font-weight:600; color:var(--cold);
+    background:#e9f0ff; padding:3px 10px; border-radius:20px; margin-bottom:8px;}
+  h1{font-size:21px; font-weight:600; margin:0 0 4px;}
+  .sub{color:var(--muted); font-size:14px; margin:0 0 18px;}
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:16px;}
+  h2{font-size:15px; font-weight:600; margin:0 0 12px;}
+  .controls{display:flex; flex-wrap:wrap; gap:14px 22px; align-items:center;}
+  .ctl{display:flex; align-items:center; gap:9px;}
+  .ctl label{font-size:13.5px; color:var(--muted);}
+  .pill{font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px;}
+  .pill-dem{background:#e9f0ff; color:#2f6fed;} .pill-wx{background:#f1ebfa; color:#8e54c4;}
+  input[type=range]{width:130px;}
+  .val{font-size:13.5px; font-weight:600; min-width:62px;}
+  button{font:inherit; font-size:13.5px; padding:8px 13px; border-radius:8px; border:1px solid #cfd6e0; background:#fff; cursor:pointer;}
+  button:hover{background:#f0f3f8;}
+  button.warn{border-color:#e6b487; color:#9a5a14;} button.dem{border-color:#9cb8ef; color:#2f6fed;}
+  .row{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; align-items:center;}
+  .chk{display:flex; align-items:center; gap:7px; font-size:13.5px; color:var(--muted);}
+
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:10px;}
+  .mc{background:#f1f4f9; border-radius:10px; padding:11px 13px;}
+  .mc .k{font-size:12px; color:var(--muted);} .mc .v{font-size:20px; font-weight:600; margin-top:2px;}
+
+  .chillers{display:flex; gap:12px; margin-bottom:4px;}
+  .ch{flex:1; border-radius:10px; padding:12px; text-align:center; border:1.5px solid;}
+  .ch.on{background:#eaf2ff; border-color:#7da6ee; color:#234b9e;}
+  .ch.start{background:#fdf1de; border-color:#e6b487; color:#9a5a14;}
+  .ch.off{background:#eef0f3; border-color:#cdd3dc; color:#8b95a3;}
+  .ch .t{font-weight:600; font-size:14px;} .ch .s{font-size:12px; margin-top:3px;}
+
+  .capbar{position:relative; height:32px; border-radius:8px; background:#eef0f3; overflow:hidden;}
+  .capfill{position:absolute; left:0; top:0; height:100%; background:#cfe0fb;}
+  .capdem{position:absolute; top:-4px; width:3px; height:40px; background:var(--ink);}
+  .caplbl{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); margin-top:8px;}
+
+  .ladder{display:flex; flex-direction:column; gap:8px;}
+  .step{display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:9px; background:#f1f4f9; border-left:4px solid #cdd3dc;}
+  .step.active{background:var(--greenbg); border-left-color:var(--green);}
+  .step.alarm{background:var(--redbg); border-left-color:var(--red);}
+  .step .n{width:22px; height:22px; border-radius:50%; background:#cdd3dc; color:#fff; font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:center; flex:none;}
+  .step.active .n{background:var(--green);} .step.alarm .n{background:var(--red);}
+  .step .tx{font-size:13.5px;} .step .tx b{font-weight:600;}
+
+  .spark{width:100%; height:150px; margin-top:6px;}
+  .note{font-size:13.5px; line-height:1.7; color:#333;} .note b{font-weight:600;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="stagetag">Closed-loop · plant controls itself</span>
+  <h1>Chiller plant — escalation under a load &amp; weather spike</h1>
+  <p class="sub">You set only the triggers (demand + weather). The plant decides how to respond — pump, chiller, tower, staging — in real time.</p>
+
+  <div class="panel">
+    <div class="controls">
+      <div class="ctl"><span class="pill pill-dem">demand</span><label>Baseline load</label><input type="range" id="load" min="100" max="1200" step="20" value="280"><span class="val" id="load-v">280 kW</span></div>
+      <div class="ctl"><span class="pill pill-wx">weather</span><label>Wet-bulb</label><input type="range" id="wb" min="10" max="30" step="1" value="24"><span class="val" id="wb-v">24 °C</span></div>
+    </div>
+    <div class="row">
+      <button class="dem" id="spike">⚡ Occupancy spike (+300 kW)</button>
+      <button class="warn" id="heat">☀ Heat wave (+6 °C)</button>
+      <button id="reset">Reset</button>
+      <button id="pause">Pause</button>
+      <label class="chk"><input type="checkbox" id="predict"> Predictive (knows the spike is coming)</label>
+    </div>
+    <div id="incoming" style="margin-top:10px; font-size:13px; font-weight:600; min-height:18px;"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Plant response (computed live)</h2>
+    <div class="cards">
+      <div class="mc"><div class="k">Pump speed</div><div class="v" id="m-pump">80%</div></div>
+      <div class="mc"><div class="k">Chillers on</div><div class="v" id="m-n">1</div></div>
+      <div class="mc"><div class="k">Tower fans</div><div class="v" id="m-tower">50%</div></div>
+      <div class="mc"><div class="k">CHWS (set 7)</div><div class="v" id="m-chws">7.0 °C</div></div>
+      <div class="mc"><div class="k">ΔT</div><div class="v" id="m-dt">5.0 °C</div></div>
+      <div class="mc"><div class="k">Plant power</div><div class="v" id="m-kw">— kW</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Chillers &amp; capacity vs demand</h2>
+    <div class="chillers">
+      <div class="ch off" id="ch1"><div class="t">Chiller 1</div><div class="s" id="ch1s">off</div></div>
+      <div class="ch off" id="ch2"><div class="t">Chiller 2</div><div class="s" id="ch2s">off</div></div>
+      <div class="ch off" id="ch3"><div class="t">Chiller 3</div><div class="s" id="ch3s">off</div></div>
+    </div>
+    <div class="capbar"><div class="capfill" id="capfill"></div><div class="capdem" id="capdem"></div></div>
+    <div class="caplbl"><span id="cap-avail">available —</span><span id="cap-dem">demand —</span></div>
+  </div>
+
+  <div class="panel">
+    <h2>Escalation ladder</h2>
+    <div class="ladder">
+      <div class="step" id="step1"><span class="n">1</span><span class="tx"><b>Pump ramps up</b> — more flow to carry the heat, holds ΔT</span></div>
+      <div class="step" id="step2"><span class="n">2</span><span class="tx"><b>Chiller loads up</b> — compressor works harder to hold CHWS</span></div>
+      <div class="step" id="step3"><span class="n">3</span><span class="tx"><b>Tower fans ramp</b> — reject extra heat, fight rising lift</span></div>
+      <div class="step" id="step4"><span class="n">4</span><span class="tx"><b>Stage up a chiller</b> — capacity limit reached</span></div>
+      <div class="step" id="step5"><span class="n">5</span><span class="tx"><b>Loss of control</b> — CHWS drifts above setpoint, comfort slips</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>CHWS over time (setpoint 7 °C, comfort limit 9 °C)</h2>
+    <svg class="spark" id="spark" viewBox="0 0 800 150" preserveAspectRatio="none" role="img" aria-label="CHWS over time"></svg>
+    <p class="note" style="margin-top:8px;">Hit <b>Occupancy spike</b> and watch the ladder climb. Toggle <b>Predictive</b> on, reset, and spike again — the plant pre-stages
+    before the load arrives, so CHWS barely moves. That gap between reactive and predictive is the core value of AI optimization.</p>
+  </div>
+</div>
+
+<script>
+  const CP=4.186, FPC=16.8, CAPNOM=422, SET=7, COMFORT=9, MAXCAP=3*CAPNOM;
+  const START_TICKS=16, LEAD=24, RAMP=0.09;
+  const $=id=>document.getElementById(id);
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+  let st={ loadGoal:280, loadAct:280, futureGoal:280, applyCd:0, wb:24, pump:80, tower:50, chws:7, N:1, startCd:0, pend:1, predict:false, paused:false };
+  const NH=90, chwsH=Array(NH).fill(7);
+
+  function capPer(){
+    const app=3+5*(1-st.tower/100), cws=st.wb+app, lift=cws-st.chws+8;
+    const f=clamp(1-0.012*(lift-18),0.6,1.06);
+    return {cap:CAPNOM*f, lift:lift};
+  }
+
+  function step(){
+    if(st.paused) return;
+    // a scheduled surge: announced now, the heat actually arrives LEAD ticks later
+    if(st.applyCd>0){ st.applyCd--; if(st.applyCd===0) st.loadGoal=st.futureGoal; }
+    // building inertia: actual load chases the load that has actually arrived
+    st.loadAct += (st.loadGoal-st.loadAct)*RAMP;
+    // predictive control acts on the forecast; reactive only on what has arrived
+    const ctrlLoad = st.predict ? st.futureGoal : st.loadAct;
+
+    const cp1=capPer().cap;
+    // smallest chiller count that covers the (forecast or actual) load at 90%
+    let target=1; while(target<3 && ctrlLoad>target*cp1*0.9) target++;
+    if(target>st.N && st.startCd<=0){ st.startCd=START_TICKS; st.pend = st.predict?target:st.N+1; }
+    else if(st.N>1 && ctrlLoad<(st.N-1)*cp1*0.78){ st.N--; st.startCd=0; }
+    if(st.startCd>0){ st.startCd--; if(st.startCd===0) st.N=Math.max(st.N,st.pend); }
+
+    const avail = st.N*cp1;
+    const delivered = Math.min(st.loadAct, avail);
+    const unmet = Math.max(0, st.loadAct-avail);
+    const chwsTgt = SET + (unmet/CAPNOM)*6;
+    st.chws += (chwsTgt-st.chws)*(chwsTgt>st.chws?0.12:0.08);
+
+    // pump target to hold ΔT≈5 on delivered heat
+    const flowReq = delivered/(CP*5), maxFlow=st.N*FPC;
+    st.pump += (clamp(flowReq/maxFlow*100,40,100)-st.pump)*0.18;
+    // tower target rises with load fraction and weather
+    st.tower += (clamp(40 + (ctrlLoad/(st.N*CAPNOM))*55 + (st.wb-18)*1.6,40,100)-st.tower)*0.14;
+
+    chwsH.push(st.chws); chwsH.shift();
+    render(delivered, avail, cp1);
+  }
+
+  function render(delivered, avail, cp1){
+    const flow=st.pump/100*st.N*FPC;
+    const dt=flow>0?delivered/(flow*CP):0;
+    const PLR=avail>0?st.loadAct/(st.N*cp1):0;
+    const lift=capPer().lift;
+    const PLReff=Math.min(1,PLR);
+    let fplr=1+1.2*Math.pow(PLReff-0.5,2); if(PLReff<0.25) fplr+=(0.25-PLReff)*1.5;
+    const kwton=Math.max(0.3,0.55*fplr*(1+0.025*(lift-18)));
+    const chillerKW=(delivered/3.517)*kwton;
+    const pumpKW=st.N*15*Math.pow(st.pump/100,3);
+    const towerKW=st.N*8*Math.pow(st.tower/100,3);
+    const total=chillerKW+pumpKW+towerKW;
+
+    $('load').value=Math.round(st.loadGoal); $('load-v').textContent=Math.round(st.loadGoal)+' kW';
+    $('m-pump').textContent=Math.round(st.pump)+'%';
+    $('m-n').textContent=st.N;
+    $('m-tower').textContent=Math.round(st.tower)+'%';
+    $('m-chws').textContent=st.chws.toFixed(1)+' °C';
+    $('m-chws').style.color = st.chws>COMFORT?'var(--red)':(st.chws>SET+0.4?'var(--amber)':'var(--ink)');
+    $('m-dt').textContent=dt.toFixed(1)+' °C';
+    $('m-kw').textContent=Math.round(total)+' kW';
+
+    // chillers
+    for(let i=1;i<=3;i++){
+      const el=$('ch'+i), s=$('ch'+i+'s');
+      const starting = (i===st.N+1 && st.startCd>0);
+      if(i<=st.N){ el.className='ch on'; s.textContent=Math.round(PLR*100)+'% load'; }
+      else if(starting){ el.className='ch start'; s.textContent='starting…'; }
+      else { el.className='ch off'; s.textContent='off'; }
+    }
+
+    // capacity bar
+    $('capfill').style.width=clamp(avail/MAXCAP*100,0,100)+'%';
+    $('capdem').style.left=clamp(st.loadAct/MAXCAP*100,0,100)+'%';
+    $('cap-avail').textContent='available '+Math.round(avail)+' kW';
+    $('cap-dem').textContent='demand '+Math.round(st.loadAct)+' kW';
+
+    // ladder
+    setStep('step1', st.pump>72, false);
+    setStep('step2', PLR>0.85, false);
+    setStep('step3', st.tower>90, false);
+    setStep('step4', st.N>1 || st.startCd>0, false);
+    setStep('step5', st.chws>SET+0.6, true);
+
+    const inc=$('incoming');
+    if(st.applyCd>0){
+      const secs=Math.ceil(st.applyCd*0.25);
+      inc.textContent='⏳ load surge ('+Math.round(st.futureGoal)+' kW) arriving in '+secs+'s — '+(st.predict?'plant is pre-staging now':'plant has not reacted yet');
+      inc.style.color=st.predict?'var(--green)':'var(--amber)';
+    } else { inc.textContent=''; }
+
+    drawSpark();
+  }
+  function setStep(id,on,alarm){
+    const e=$(id); e.className='step'+(on?(alarm?' alarm':' active'):'');
+  }
+
+  function drawSpark(){
+    const W=800,H=150,lo=6,hi=14, y=v=>H-clamp((v-lo)/(hi-lo),0,1)*H;
+    const pts=chwsH.map((v,i)=>(i/(NH-1)*W).toFixed(1)+','+y(v).toFixed(1)).join(' ');
+    $('spark').innerHTML=
+      '<rect x="0" y="0" width="800" height="'+y(COMFORT)+'" fill="var(--redbg)"/>'+
+      '<rect x="0" y="'+y(COMFORT)+'" width="800" height="'+(y(SET)-y(COMFORT))+'" fill="var(--amberbg)"/>'+
+      '<rect x="0" y="'+y(SET)+'" width="800" height="'+(H-y(SET))+'" fill="var(--greenbg)"/>'+
+      '<line x1="0" y1="'+y(SET)+'" x2="800" y2="'+y(SET)+'" stroke="var(--green)" stroke-dasharray="5 5" stroke-width="1"/>'+
+      '<line x1="0" y1="'+y(COMFORT)+'" x2="800" y2="'+y(COMFORT)+'" stroke="var(--red)" stroke-dasharray="5 5" stroke-width="1"/>'+
+      '<polyline points="'+pts+'" fill="none" stroke="var(--cold)" stroke-width="2.5"/>';
+  }
+
+  $('load').addEventListener('input',e=>{ st.loadGoal=st.futureGoal=+e.target.value; st.applyCd=0; $('load-v').textContent=st.loadGoal+' kW'; });
+  $('wb').addEventListener('input',e=>{ st.wb=+e.target.value; $('wb-v').textContent=st.wb+' °C'; });
+  $('spike').addEventListener('click',()=>{ const base=st.applyCd>0?st.futureGoal:st.loadGoal; st.futureGoal=clamp(base+300,100,1200); st.applyCd=LEAD; });
+  $('heat').addEventListener('click',()=>{ st.wb=clamp(st.wb+6,10,30); $('wb').value=st.wb; $('wb-v').textContent=st.wb+' °C'; });
+  $('reset').addEventListener('click',()=>{
+    st.loadGoal=280; st.loadAct=280; st.futureGoal=280; st.applyCd=0; st.wb=24; st.pump=80; st.tower=50; st.chws=7; st.N=1; st.startCd=0; st.pend=1;
+    $('load').value=280; $('load-v').textContent='280 kW'; $('wb').value=24; $('wb-v').textContent='24 °C';
+    for(let i=0;i<NH;i++) chwsH[i]=7;
+  });
+  $('pause').addEventListener('click',()=>{ st.paused=!st.paused; $('pause').textContent=st.paused?'Play':'Pause'; });
+  $('predict').addEventListener('change',e=>{ st.predict=e.target.checked; });
+
+  setInterval(step,250);
+</script>
+</body>
+</html>

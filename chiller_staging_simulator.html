@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Chiller Plant — Live Staging Simulator</title>
+<style>
+  :root{
+    --spd:1; --dur:calc(1.6s / var(--spd)); --fandur:calc(2.4s / var(--spd));
+    --cold:#2f6fed; --warm:#e8833a; --air:#3aa687;
+    --pipe:#d6dbe3; --ink:#1f2530; --muted:#5b6573; --line:#e4e8ee;
+    --bg:#f7f9fc; --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1040px; margin:0 auto; padding:24px 18px 48px;}
+  h1{font-size:22px; font-weight:600; margin:0 0 4px;}
+  .sub{color:var(--muted); font-size:14px; margin:0 0 18px;}
+  .controls{display:flex; align-items:center; gap:16px 22px; flex-wrap:wrap;
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin-bottom:16px;}
+  .ctl{display:flex; align-items:center; gap:10px;}
+  .ctl label{font-size:14px; color:var(--muted);}
+  input[type=range]{width:150px;}
+  select,button{font:inherit; font-size:14px; padding:7px 12px; border-radius:8px; border:1px solid #cfd6e0; background:#fff; cursor:pointer;}
+  button:hover,select:hover{background:#f0f3f8;}
+  .val{font-size:14px; font-weight:600; min-width:52px;}
+  .stage{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:8px;}
+  svg{width:100%; height:auto; display:block;}
+  .banner{margin:14px 0; padding:11px 16px; border-radius:10px; font-size:14px;}
+  .b-ok{background:#e9f7ee; color:#1c6b3a;} .b-warn{background:#fdeede; color:#9a5a14;} .b-bad{background:#fbe9e9; color:#a32626;}
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(135px,1fr)); gap:12px; margin-top:14px;}
+  .mc{background:#f1f4f9; border-radius:10px; padding:12px 14px;}
+  .mc .k{font-size:12.5px; color:var(--muted);} .mc .v{font-size:22px; font-weight:600; margin-top:2px;}
+  .legend{display:flex; gap:20px; flex-wrap:wrap; margin-top:14px; font-size:13.5px; color:var(--muted);}
+  .legend span{display:inline-flex; align-items:center; gap:7px;}
+  .sw{width:22px; height:5px; border-radius:3px;}
+  .note{margin-top:18px; font-size:14px; line-height:1.7; color:#333;}
+
+  .block{fill:#fbfcfe; stroke:#c4ccd8; stroke-width:1.5;}
+  .title{font-size:14px; font-weight:600; fill:var(--ink);}
+  .sub-t{font-size:11.5px; fill:var(--muted);}
+  .tag{font-size:11.5px; fill:var(--muted);}
+  .on{fill:#eaf2ff; stroke:#7da6ee; stroke-width:1.8;}
+  .offc{fill:#eef0f3; stroke:#cdd3dc; stroke-width:1.5;}
+
+  .pipe{fill:none; stroke:var(--pipe); stroke-width:8; stroke-linecap:round;}
+  .flow{fill:none; stroke-width:4.5; stroke-linecap:round; stroke-dasharray:0.1 15; animation:flow var(--dur) linear infinite;}
+  .cold{stroke:var(--cold);} .warm{stroke:var(--warm);} .airf{stroke:var(--air);}
+  @keyframes flow{ to{ stroke-dashoffset:-15.1; } }
+  .fan{transform-box:fill-box; transform-origin:center; animation:spin var(--fandur) linear infinite;}
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+  .blade{fill:#7d8aa0;} .hub{fill:#4a5468;}
+  .off{display:none;}
+  .paused .flow, .paused .fan{animation-play-state:paused;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Multi-chiller plant — live staging simulator</h1>
+  <p class="sub">Three parallel chillers. Change the load and watch staging turn machines on/off, temperatures shift, and the flow speed up or slow down.</p>
+
+  <div class="controls">
+    <div class="ctl"><label>Cooling load</label><input type="range" id="load" min="0" max="1000" step="10" value="500"><span class="val" id="load-v">500 kW</span></div>
+    <div class="ctl"><label>Pump speed</label><input type="range" id="pump" min="40" max="100" step="1" value="100"><span class="val" id="pump-v">100%</span></div>
+    <div class="ctl"><label>Staging</label>
+      <select id="mode"><option value="auto">Auto</option><option value="1">Force 1</option><option value="2">Force 2</option><option value="3">Force 3</option></select>
+    </div>
+    <button id="pause">Pause</button>
+  </div>
+
+  <div class="banner b-ok" id="banner"></div>
+
+  <div class="stage" id="stage">
+    <svg viewBox="0 0 1000 600" role="img" aria-label="Live multi-chiller staging diagram">
+      <!-- base pipes -->
+      <path class="pipe" d="M710,150 L120,150"/>
+      <path class="pipe" d="M120,178 L690,178"/>
+      <path class="pipe" d="M290,405 L760,405"/>
+      <path class="pipe" d="M820,440 L330,440"/>
+      <path class="pipe" d="M760,405 L760,500"/>
+      <path class="pipe" d="M820,500 L820,440"/>
+      <path class="pipe" d="M290,178 L290,215"/><path class="pipe" d="M330,215 L330,150"/>
+      <path class="pipe" d="M290,335 L290,405"/><path class="pipe" d="M330,440 L330,335"/>
+      <path class="pipe" d="M480,178 L480,215"/><path class="pipe" d="M520,215 L520,150"/>
+      <path class="pipe" d="M480,335 L480,405"/><path class="pipe" d="M520,440 L520,335"/>
+      <path class="pipe" d="M670,178 L670,215"/><path class="pipe" d="M710,215 L710,150"/>
+      <path class="pipe" d="M670,335 L670,405"/><path class="pipe" d="M710,440 L710,335"/>
+
+      <!-- header + building flows (group h) -->
+      <g id="hflow">
+        <path class="flow warm" d="M710,150 L120,150"/>
+        <path class="flow cold" d="M120,178 L690,178"/>
+        <path class="flow cold" d="M290,405 L760,405"/>
+        <path class="flow warm" d="M820,440 L330,440"/>
+        <path class="flow cold" d="M760,405 L760,500"/>
+        <path class="flow warm" d="M820,500 L820,440"/>
+      </g>
+      <!-- per-chiller taps -->
+      <g id="fc1">
+        <path class="flow cold" d="M290,178 L290,215"/><path class="flow warm" d="M330,215 L330,150"/>
+        <path class="flow cold" d="M290,335 L290,405"/><path class="flow warm" d="M330,440 L330,335"/>
+      </g>
+      <g id="fc2">
+        <path class="flow cold" d="M480,178 L480,215"/><path class="flow warm" d="M520,215 L520,150"/>
+        <path class="flow cold" d="M480,335 L480,405"/><path class="flow warm" d="M520,440 L520,335"/>
+      </g>
+      <g id="fc3">
+        <path class="flow cold" d="M670,178 L670,215"/><path class="flow warm" d="M710,215 L710,150"/>
+        <path class="flow cold" d="M670,335 L670,405"/><path class="flow warm" d="M710,440 L710,335"/>
+      </g>
+
+      <!-- cooling tower -->
+      <rect class="block" x="40" y="45" width="150" height="80" rx="10"/>
+      <g class="fan" transform="translate(115,68)">
+        <ellipse class="blade" rx="22" ry="6"/><ellipse class="blade" rx="22" ry="6" transform="rotate(60)"/>
+        <ellipse class="blade" rx="22" ry="6" transform="rotate(120)"/><circle class="hub" r="5"/>
+      </g>
+      <text class="title" x="115" y="112" text-anchor="middle" font-size="13">Cooling tower</text>
+      <text class="tag warm" x="430" y="142" text-anchor="middle">condenser return (warm) →</text>
+      <text class="tag cold" x="430" y="196" text-anchor="middle">condenser supply (cool)</text>
+
+      <!-- chillers -->
+      <rect id="r1" class="block on" x="235" y="215" width="150" height="120" rx="10"/>
+      <text class="title" x="310" y="262" text-anchor="middle">Chiller 1</text>
+      <text class="sub-t" id="st1" x="310" y="284" text-anchor="middle">—</text>
+
+      <rect id="r2" class="block on" x="425" y="215" width="150" height="120" rx="10"/>
+      <text class="title" x="500" y="262" text-anchor="middle">Chiller 2</text>
+      <text class="sub-t" id="st2" x="500" y="284" text-anchor="middle">—</text>
+
+      <rect id="r3" class="block on" x="615" y="215" width="150" height="120" rx="10"/>
+      <text class="title" x="690" y="262" text-anchor="middle">Chiller 3</text>
+      <text class="sub-t" id="st3" x="690" y="284" text-anchor="middle">—</text>
+
+      <!-- pumps -->
+      <circle cx="240" cy="178" r="11" fill="#fff" stroke="var(--cold)" stroke-width="2.5"/>
+      <text x="240" y="182" text-anchor="middle" font-size="10" font-weight="600" fill="var(--cold)">P</text>
+      <text class="tag" x="240" y="206" text-anchor="middle">CW pump</text>
+      <circle cx="400" cy="405" r="11" fill="#fff" stroke="var(--cold)" stroke-width="2.5"/>
+      <text x="400" y="409" text-anchor="middle" font-size="10" font-weight="600" fill="var(--cold)">P</text>
+      <text class="tag" x="400" y="431" text-anchor="middle">CHW pump</text>
+
+      <!-- building / AHU -->
+      <rect class="block" x="600" y="500" width="320" height="80" rx="10"/>
+      <g class="fan" transform="translate(648,540)">
+        <ellipse class="blade" rx="18" ry="5"/><ellipse class="blade" rx="18" ry="5" transform="rotate(60)"/>
+        <ellipse class="blade" rx="18" ry="5" transform="rotate(120)"/><circle class="hub" r="4"/>
+      </g>
+      <text class="title" x="790" y="535" text-anchor="middle">Building load</text>
+      <text class="sub-t" x="790" y="556" text-anchor="middle">heat removed at AHU coils</text>
+
+      <!-- live water labels -->
+      <text class="tag cold" x="700" y="398" text-anchor="middle">CHWS <tspan id="lab-chws" font-weight="600">7.0</tspan>°C</text>
+      <text class="tag warm" x="700" y="460" text-anchor="middle">CHWR <tspan id="lab-chwr" font-weight="600">12.0</tspan>°C</text>
+      <text class="tag" x="870" y="470" text-anchor="middle" font-weight="600" fill="var(--ink)">ΔT <tspan id="lab-dt">5.0</tspan>°C</text>
+    </svg>
+  </div>
+
+  <div class="cards">
+    <div class="mc"><div class="k">Cooling load</div><div class="v" id="m-tr">142 TR</div></div>
+    <div class="mc"><div class="k">Chillers running</div><div class="v" id="m-n">2 / 3</div></div>
+    <div class="mc"><div class="k">Each chiller at</div><div class="v" id="m-plr">71%</div></div>
+    <div class="mc"><div class="k">Delta-T</div><div class="v" id="m-dt">5.0 °C</div></div>
+    <div class="mc"><div class="k">Plant power</div><div class="v" id="m-kw">— kW</div></div>
+    <div class="mc"><div class="k">Plant kW/ton</div><div class="v" id="m-kwton">—</div></div>
+  </div>
+
+  <div class="legend">
+    <span><i class="sw" style="background:var(--cold)"></i> chilled / cool water</span>
+    <span><i class="sw" style="background:var(--warm)"></i> warm return water</span>
+    <span><i class="sw" style="background:#eaf2ff;border:1px solid #7da6ee"></i> chiller running</span>
+    <span><i class="sw" style="background:#eef0f3;border:1px solid #cdd3dc"></i> chiller off</span>
+  </div>
+
+  <div class="note">
+    <p>Each chiller is 100 TR (351.7 kW). <b>Auto</b> staging adds a machine before any running chiller passes ~90% load,
+    so they stay near their most efficient part-load. Slide the load down low and watch chillers switch off; force too few
+    chillers for a big load and you'll see an overload warning. Compare <b>Auto</b> against <b>Force 3</b> at low load to see
+    how running fewer machines harder beats spreading load thinly across many.</p>
+  </div>
+</div>
+
+<script>
+  const CAP=351.7, NREF=3, FPC=16.8, CP=4.186;
+  const $=id=>document.getElementById(id);
+  const stage=$('stage');
+  let userPaused=false;
+
+  function kwtonOf(plr){
+    if(plr<=0) return 0;
+    let f=1+1.2*Math.pow(plr-0.5,2);
+    if(plr<0.25) f+=(0.25-plr)*1.5;
+    return Math.max(0.3, 0.55*f);
+  }
+  function plantPower(load,N,pump){
+    if(N<=0||load<=0) return {chiller:0,pump:0,tower:0,total:0};
+    const tons=load/3.517, plr=(load/N)/CAP, kwt=kwtonOf(plr);
+    const chiller=tons*kwt;
+    const pumpE=N*15*Math.pow(pump/100,3);
+    const tower=N*4;
+    return {chiller,pump:pumpE,tower,total:chiller+pumpE+tower};
+  }
+
+  function update(){
+    const load=+$('load').value, pump=+$('pump').value, mode=$('mode').value;
+    $('load-v').textContent=load+' kW';
+    $('pump-v').textContent=pump+'%';
+
+    let N;
+    if(load<=0) N=0;
+    else if(mode==='auto') N=Math.min(3,Math.max(1,Math.ceil(load/(CAP*0.9))));
+    else N=+mode;
+
+    const perLoad=N>0?load/N:0, plr=perLoad/CAP, overload=plr>1.001;
+    const flow=N*FPC*(pump/100);
+    const dt=(N>0&&flow>0)?load/(flow*CP):0;
+    const chwr=7+dt, tons=load/3.517;
+    const p=plantPower(load,N,pump);
+    const plantKwton=tons>0?p.total/tons:0;
+
+    // chiller boxes + taps
+    for(let i=1;i<=3;i++){
+      const run=i<=N;
+      $('r'+i).setAttribute('class','block '+(run?'on':'offc'));
+      $('st'+i).textContent = run ? Math.round(plr*100)+'% load' : 'OFF';
+      $('fc'+i).classList.toggle('off', !run);
+    }
+
+    // labels
+    $('lab-chws').textContent='7.0';
+    $('lab-chwr').textContent=chwr.toFixed(1);
+    $('lab-dt').textContent=dt.toFixed(1);
+
+    // cards
+    $('m-tr').textContent=Math.round(tons)+' TR';
+    $('m-n').textContent=N+' / 3';
+    $('m-plr').textContent=N>0?Math.round(plr*100)+'%':'—';
+    $('m-dt').textContent=dt.toFixed(1)+' °C';
+    $('m-kw').textContent=Math.round(p.total)+' kW';
+    $('m-kwton').textContent=plantKwton>0?plantKwton.toFixed(2):'—';
+
+    // flow speed
+    const spd=Math.max(0.15, Math.min(3, flow/(NREF*FPC)*2.6));
+    document.documentElement.style.setProperty('--spd', spd.toFixed(2));
+    stage.classList.toggle('paused', userPaused || N===0);
+
+    // banner
+    const b=$('banner');
+    if(N===0){ b.className='banner b-warn'; b.textContent='Plant is off — no cooling load.'; }
+    else if(overload){ b.className='banner b-bad';
+      b.textContent='Overload: '+N+' chiller(s) can’t meet '+Math.round(tons)+' TR (each at '+Math.round(plr*100)+'%). Stage up.'; }
+    else {
+      const all3=plantPower(load,3,pump).total;
+      const save=all3-p.total;
+      let msg='Auto staged '+N+' of 3 chillers, each at '+Math.round(plr*100)+'%. Plant kW/ton '+plantKwton.toFixed(2)+'.';
+      if(N<3 && save>1) msg+=' Running '+N+' instead of 3 saves ~'+Math.round(save)+' kW here.';
+      b.className='banner b-ok'; b.textContent=msg;
+    }
+  }
+
+  ['load','pump','mode'].forEach(id=>$(id).addEventListener('input',update));
+  $('pause').addEventListener('click',()=>{ userPaused=!userPaused; $('pause').textContent=userPaused?'Play':'Pause'; update(); });
+  update();
+</script>
+</body>
+</html>

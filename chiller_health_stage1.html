@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Single-Chiller Health — Stage 1: Chilled-Water ΔT</title>
+<style>
+  :root{
+    --cold:#2f6fed; --warm:#e8833a;
+    --ink:#1f2530; --muted:#5b6573; --line:#e4e8ee; --bg:#f7f9fc; --card:#fff;
+    --green:#1c8a4d; --greenbg:#e7f6ed; --amber:#b5760f; --amberbg:#fdf1de; --red:#c12f2f; --redbg:#fbe7e7;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:880px; margin:0 auto; padding:24px 18px 48px;}
+  .stagetag{display:inline-block; font-size:12px; font-weight:600; color:var(--cold);
+    background:#e9f0ff; padding:3px 10px; border-radius:20px; margin-bottom:8px;}
+  h1{font-size:21px; font-weight:600; margin:0 0 4px;}
+  .sub{color:var(--muted); font-size:14px; margin:0 0 18px;}
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:16px;}
+  .controls{display:flex; flex-wrap:wrap; gap:16px 24px;}
+  .ctl{display:flex; align-items:center; gap:10px;}
+  .ctl label{font-size:14px; color:var(--muted);}
+  input[type=range]{width:150px;}
+  .val{font-size:14px; font-weight:600; min-width:54px;}
+  .status{display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:10px; margin-bottom:16px;}
+  .status .dot{width:14px; height:14px; border-radius:50%; flex:none;}
+  .status .txt{font-size:14.5px; line-height:1.5;}
+  .status .hd{font-weight:600;}
+
+  .gauge-wrap{margin:6px 0 4px;}
+  .bar{position:relative; height:30px; border-radius:8px; overflow:hidden; display:flex;}
+  .bar .z{height:100%;}
+  .needle{position:absolute; top:-6px; width:3px; height:42px; background:var(--ink); border-radius:2px;}
+  .design{position:absolute; top:-6px; width:2px; height:42px; background:#444; opacity:.45;}
+  .scale{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); margin-top:10px;}
+
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin-top:16px;}
+  .mc{background:#f1f4f9; border-radius:10px; padding:12px 14px;}
+  .mc .k{font-size:12.5px; color:var(--muted);} .mc .v{font-size:21px; font-weight:600; margin-top:2px;}
+
+  h2{font-size:15px; font-weight:600; margin:4px 0 10px;}
+  .spark{width:100%; height:150px;}
+  .note{font-size:13.5px; line-height:1.7; color:#333;}
+  .note b{font-weight:600;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="stagetag">Stage 1 of 5 · Water side</span>
+  <h1>Single-chiller plant health — chilled-water ΔT</h1>
+  <p class="sub">ΔT is the first thing to watch: a falling ΔT is the earliest, loudest sign that a plant's health is slipping.</p>
+
+  <div class="panel">
+    <div class="controls">
+      <div class="ctl"><label>Cooling load</label><input type="range" id="load" min="100" max="500" step="10" value="350"><span class="val" id="load-v">350 kW</span></div>
+      <div class="ctl"><label>Pump speed</label><input type="range" id="pump" min="40" max="100" step="1" value="100"><span class="val" id="pump-v">100%</span></div>
+      <div class="ctl"><label>Coil fouling / valve bypass</label><input type="range" id="fault" min="0" max="100" step="1" value="0"><span class="val" id="fault-v">0%</span></div>
+    </div>
+  </div>
+
+  <div class="status" id="status">
+    <span class="dot" id="dot"></span>
+    <span class="txt"><span class="hd" id="status-hd"></span><br><span id="status-msg"></span></span>
+  </div>
+
+  <div class="panel">
+    <h2>Chilled-water ΔT (design = 5.0 °C)</h2>
+    <div class="gauge-wrap">
+      <div class="bar">
+        <div class="z" style="width:35.7%; background:var(--redbg);"></div>
+        <div class="z" style="width:21.4%; background:var(--amberbg);"></div>
+        <div class="z" style="width:42.9%; background:var(--greenbg);"></div>
+      </div>
+      <div class="design" id="design"></div>
+      <div class="needle" id="needle"></div>
+      <div class="scale"><span>0</span><span>2.5 (fault)</span><span>4.0 (warn)</span><span>5.0 design</span><span>7</span></div>
+    </div>
+    <div class="cards">
+      <div class="mc"><div class="k">Actual ΔT</div><div class="v" id="m-dt">5.0 °C</div></div>
+      <div class="mc"><div class="k">% of design</div><div class="v" id="m-pct">100%</div></div>
+      <div class="mc"><div class="k">CHW flow</div><div class="v" id="m-flow">16.8 L/s</div></div>
+      <div class="mc"><div class="k">CHWS / CHWR</div><div class="v" id="m-temps">7 / 12</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>ΔT trend (live)</h2>
+    <svg class="spark" id="spark" viewBox="0 0 800 150" preserveAspectRatio="none" role="img" aria-label="Live trend of chilled-water delta-T"></svg>
+    <p class="note" style="margin-top:8px;">The line drifts toward the current ΔT. Raise the fouling slider and watch it slide from the green band down into amber and red — that slow decline over days or weeks is exactly the pattern an FDD/AI system is trained to catch early.</p>
+  </div>
+
+  <div class="panel">
+    <h2>What a low ΔT is telling you</h2>
+    <p class="note">A ΔT below design rarely means too little cooling — it usually means the plant is <b>moving too much water for the heat it's actually transferring</b>. Likely causes: <b>fouled or dirty cooling coils</b>, <b>stuck-open or leaking control valves</b>, <b>three-way valves bypassing water</b>, or simply <b>over-pumping at low load</b>. The hidden cost is energy: to still meet the load the plant pushes extra flow, so pump power climbs (cube law) while the chiller sees warm-ish return water it can't use efficiently. Distinguishing a genuine fault from plain over-pumping is the key diagnostic — and the job of the symptoms we'll add in the next stages.</p>
+  </div>
+</div>
+
+<script>
+  const CP=4.186, FPC=16.8, DESIGN=5.0, MAXT=7;
+  const $=id=>document.getElementById(id);
+  let target=5.0;
+  const N=70, hist=Array(N).fill(5.0);
+
+  function band(dt){
+    if(dt>=4) return {name:'Healthy', col:'var(--green)', bg:'var(--greenbg)',
+      msg:'ΔT is at or near design. Flow is well matched to the heat being transferred — the plant is running clean.'};
+    if(dt>=2.5) return {name:'Warning — ΔT drifting low', col:'var(--amber)', bg:'var(--amberbg)',
+      msg:'ΔT has fallen below design. Watch for early coil fouling, a valve starting to bypass, or over-pumping at part load. Pump energy is creeping up.'};
+    return {name:'Fault — low ΔT syndrome', col:'var(--red)', bg:'var(--redbg)',
+      msg:'ΔT is critically low. The plant is hauling far more water than the cooling justifies — strongly suspect fouled coils, a stuck/bypassing valve, or a failed control. Pump energy is being wasted and the chiller can’t run efficiently.'};
+  }
+
+  function update(){
+    const load=+$('load').value, pump=+$('pump').value, fault=+$('fault').value;
+    $('load-v').textContent=load+' kW';
+    $('pump-v').textContent=pump+'%';
+    $('fault-v').textContent=fault+'%';
+    const flow=FPC*pump/100;
+    const cleanDT=load/(flow*CP);
+    const dt=cleanDT*(1-0.006*fault);
+    const chwr=7+dt, pct=dt/DESIGN*100;
+    target=dt;
+
+    const b=band(dt);
+    $('status').style.background=b.bg;
+    $('dot').style.background=b.col;
+    $('status-hd').textContent=b.name;
+    $('status-hd').style.color=b.col;
+    $('status-msg').textContent=b.msg;
+
+    $('needle').style.left=Math.max(0,Math.min(100,dt/MAXT*100))+'%';
+    $('design').style.left=(DESIGN/MAXT*100)+'%';
+
+    $('m-dt').textContent=dt.toFixed(1)+' °C';
+    $('m-pct').textContent=Math.round(pct)+'%';
+    $('m-flow').textContent=flow.toFixed(1)+' L/s';
+    $('m-temps').textContent='7 / '+chwr.toFixed(1);
+  }
+
+  function draw(){
+    const W=800,H=150;
+    const pts=hist.map((v,i)=>{
+      const x=i/(N-1)*W;
+      const y=H-Math.max(0,Math.min(1,v/MAXT))*H;
+      return x.toFixed(1)+','+y.toFixed(1);
+    }).join(' ');
+    const y=v=>H-(v/MAXT)*H;
+    $('spark').innerHTML=
+      '<rect x="0" y="'+y(MAXT)+'" width="800" height="'+(y(4)-y(MAXT))+'" fill="var(--greenbg)"/>'+
+      '<rect x="0" y="'+y(4)+'" width="800" height="'+(y(2.5)-y(4))+'" fill="var(--amberbg)"/>'+
+      '<rect x="0" y="'+y(2.5)+'" width="800" height="'+(H-y(2.5))+'" fill="var(--redbg)"/>'+
+      '<line x1="0" y1="'+y(DESIGN)+'" x2="800" y2="'+y(DESIGN)+'" stroke="#888" stroke-dasharray="5 5" stroke-width="1"/>'+
+      '<polyline points="'+pts+'" fill="none" stroke="var(--cold)" stroke-width="2.5"/>';
+  }
+
+  function tick(){
+    const last=hist[N-1];
+    let next=last+(target-last)*0.25+(Math.random()-0.5)*0.12;
+    next=Math.max(0,Math.min(MAXT,next));
+    hist.push(next); hist.shift();
+    draw();
+  }
+
+  ['load','pump','fault'].forEach(id=>$(id).addEventListener('input',update));
+  update(); draw();
+  setInterval(tick,650);
+</script>
+</body>
+</html>

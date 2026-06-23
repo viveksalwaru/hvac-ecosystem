@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Single-Chiller Health — ΔT + Weather</title>
+<style>
+  :root{
+    --cold:#2f6fed; --warm:#e8833a; --purple:#8e54c4;
+    --ink:#1f2530; --muted:#5b6573; --line:#e4e8ee; --bg:#f7f9fc; --card:#fff;
+    --green:#1c8a4d; --greenbg:#e7f6ed; --amber:#b5760f; --amberbg:#fdf1de; --red:#c12f2f; --redbg:#fbe7e7;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:900px; margin:0 auto; padding:24px 18px 48px;}
+  .stagetag{display:inline-block; font-size:12px; font-weight:600; color:var(--cold);
+    background:#e9f0ff; padding:3px 10px; border-radius:20px; margin-bottom:8px;}
+  h1{font-size:21px; font-weight:600; margin:0 0 4px;}
+  .sub{color:var(--muted); font-size:14px; margin:0 0 18px;}
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:16px;}
+  .controls{display:flex; flex-wrap:wrap; gap:16px 24px;}
+  .ctl{display:flex; align-items:center; gap:10px;}
+  .ctl label{font-size:14px; color:var(--muted);}
+  .ctl .pill{font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px;}
+  .pill-dem{background:#e9f0ff; color:#2f6fed;} .pill-ctl{background:#eef7f0; color:#1c8a4d;}
+  .pill-flt{background:#fbe7e7; color:#c12f2f;} .pill-wx{background:#f1ebfa; color:#8e54c4;}
+  input[type=range]{width:140px;}
+  .val{font-size:14px; font-weight:600; min-width:54px;}
+  .status{display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:10px; margin-bottom:12px;}
+  .status .dot{width:13px; height:13px; border-radius:50%; flex:none;}
+  .status .txt{font-size:14px; line-height:1.5;}
+  .status .hd{font-weight:600;}
+  h2{font-size:15px; font-weight:600; margin:2px 0 12px;}
+  .bar{position:relative; height:28px; border-radius:8px; overflow:hidden; display:flex;}
+  .bar .z{height:100%;}
+  .needle{position:absolute; top:-5px; width:3px; height:38px; background:var(--ink); border-radius:2px;}
+  .design{position:absolute; top:-5px; width:2px; height:38px; background:#444; opacity:.45;}
+  .scale{display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-top:9px;}
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:10px; margin-top:14px;}
+  .mc{background:#f1f4f9; border-radius:10px; padding:11px 13px;}
+  .mc .k{font-size:12px; color:var(--muted);} .mc .v{font-size:20px; font-weight:600; margin-top:2px;}
+  .spark{width:100%; height:120px; margin-top:12px;}
+  .note{font-size:13.5px; line-height:1.7; color:#333;} .note b{font-weight:600;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="stagetag">Single chiller · ΔT (load side) + weather (condenser side)</span>
+  <h1>Plant health — two independent triggers</h1>
+  <p class="sub">The load side and the weather side move on their own. Watch how each one degrades a different health signal.</p>
+
+  <div class="panel">
+    <div class="controls">
+      <div class="ctl"><span class="pill pill-dem">demand</span><label>Cooling load</label><input type="range" id="load" min="100" max="420" step="10" value="350"><span class="val" id="load-v">350 kW</span></div>
+      <div class="ctl"><span class="pill pill-ctl">control</span><label>Pump speed</label><input type="range" id="pump" min="40" max="100" step="1" value="100"><span class="val" id="pump-v">100%</span></div>
+      <div class="ctl"><span class="pill pill-flt">fault</span><label>Coil fouling</label><input type="range" id="fault" min="0" max="100" step="1" value="0"><span class="val" id="fault-v">0%</span></div>
+      <div class="ctl"><span class="pill pill-wx">weather</span><label>Outdoor wet-bulb</label><input type="range" id="wb" min="10" max="28" step="1" value="24"><span class="val" id="wb-v">24 °C</span></div>
+    </div>
+  </div>
+
+  <!-- ===== LOAD SIDE ===== -->
+  <div class="panel">
+    <h2>Load side — chilled-water ΔT (design 5.0 °C)</h2>
+    <div class="status" id="dt-status">
+      <span class="dot" id="dt-dot"></span>
+      <span class="txt"><span class="hd" id="dt-hd"></span> — <span id="dt-msg"></span></span>
+    </div>
+    <div class="bar">
+      <div class="z" style="width:35.7%; background:var(--redbg);"></div>
+      <div class="z" style="width:21.4%; background:var(--amberbg);"></div>
+      <div class="z" style="width:42.9%; background:var(--greenbg);"></div>
+    </div>
+    <div style="position:relative;"><div class="design" id="dt-design"></div><div class="needle" id="dt-needle"></div></div>
+    <div class="scale"><span>0</span><span>2.5</span><span>4.0</span><span>5.0</span><span>7</span></div>
+    <div class="cards">
+      <div class="mc"><div class="k">Actual ΔT</div><div class="v" id="m-dt">5.0 °C</div></div>
+      <div class="mc"><div class="k">% of design</div><div class="v" id="m-pct">100%</div></div>
+      <div class="mc"><div class="k">CHW flow</div><div class="v" id="m-flow">16.8 L/s</div></div>
+      <div class="mc"><div class="k">CHWS / CHWR</div><div class="v" id="m-temps">7 / 12</div></div>
+    </div>
+    <svg class="spark" id="spark-dt" viewBox="0 0 800 120" preserveAspectRatio="none" role="img" aria-label="Delta-T trend"></svg>
+  </div>
+
+  <!-- ===== WEATHER / CONDENSER SIDE ===== -->
+  <div class="panel">
+    <h2>Weather &amp; condenser side — chiller efficiency (design ≈ 0.60 kW/ton)</h2>
+    <div class="status" id="kw-status">
+      <span class="dot" id="kw-dot"></span>
+      <span class="txt"><span class="hd" id="kw-hd"></span> — <span id="kw-msg"></span></span>
+    </div>
+    <div class="bar">
+      <div class="z" style="width:41.7%; background:var(--greenbg);"></div>
+      <div class="z" style="width:28.3%; background:var(--amberbg);"></div>
+      <div class="z" style="width:30%; background:var(--redbg);"></div>
+    </div>
+    <div style="position:relative;"><div class="design" id="kw-design"></div><div class="needle" id="kw-needle"></div></div>
+    <div class="scale"><span>0.40</span><span>0.65</span><span>0.82</span><span>1.00</span></div>
+    <div class="cards">
+      <div class="mc"><div class="k">Wet-bulb</div><div class="v" id="m-wb">24 °C</div></div>
+      <div class="mc"><div class="k">Cond. water in</div><div class="v" id="m-cws">28 °C</div></div>
+      <div class="mc"><div class="k">Chiller lift</div><div class="v" id="m-lift">29 °C</div></div>
+      <div class="mc"><div class="k">Efficiency</div><div class="v" id="m-kw">0.79</div></div>
+    </div>
+    <svg class="spark" id="spark-kw" viewBox="0 0 800 120" preserveAspectRatio="none" role="img" aria-label="kW per ton trend"></svg>
+  </div>
+
+  <div class="panel">
+    <h2>Why two panels?</h2>
+    <p class="note">Move <b>cooling load</b> or <b>coil fouling</b> and the <b>ΔT</b> (top) reacts — but efficiency barely moves. Move
+    <b>wet-bulb</b> and the <b>kW/ton</b> (bottom) climbs while ΔT stays put. That's the lesson: a hot, humid day makes the chiller
+    work harder for the <i>same</i> cooling — a real degradation in efficiency, but a <b>normal, weather-driven</b> one, not a fault.
+    A health system has to subtract out the weather before it can tell whether the plant is actually getting sick. Load is the
+    main trigger; weather is the independent second one.</p>
+  </div>
+</div>
+
+<script>
+  const CP=4.186, FPC=16.8, DESIGN_DT=5.0, MAXT=7, CAP=422, LREF=18;
+  const $=id=>document.getElementById(id);
+  let tgtDT=5.0, tgtKW=0.7;
+  const N=70, dtH=Array(N).fill(5.0), kwH=Array(N).fill(0.7);
+
+  function dtBand(dt){
+    if(dt>=4) return ['Healthy','var(--green)','var(--greenbg)','flow matched to heat transfer, plant clean.'];
+    if(dt>=2.5) return ['Warning','var(--amber)','var(--amberbg)','ΔT below design — early fouling, valve bypass, or over-pumping.'];
+    return ['Fault: low ΔT','var(--red)','var(--redbg)','critically low — fouled coil, stuck valve, or heavy over-pumping; pump energy wasted.'];
+  }
+  function kwBand(k){
+    if(k<0.65) return ['Efficient','var(--green)','var(--greenbg)','low lift, chiller running near its best.'];
+    if(k<0.82) return ['Watch','var(--amber)','var(--amberbg)','efficiency down — usually warmer/more humid weather raising lift.'];
+    return ['Poor efficiency','var(--red)','var(--redbg)','high lift: hot wet-bulb (normal) or, if weather is mild, suspect condenser fouling.'];
+  }
+
+  function update(){
+    const load=+$('load').value, pump=+$('pump').value, fault=+$('fault').value, wb=+$('wb').value;
+    $('load-v').textContent=load+' kW'; $('pump-v').textContent=pump+'%';
+    $('fault-v').textContent=fault+'%'; $('wb-v').textContent=wb+' °C';
+
+    // load side
+    const flow=FPC*pump/100, cleanDT=load/(flow*CP), dt=cleanDT*(1-0.006*fault);
+    const chwr=7+dt, pct=dt/DESIGN_DT*100; tgtDT=dt;
+    const [dh,dc,db,dm]=dtBand(dt);
+    $('dt-status').style.background=db; $('dt-dot').style.background=dc;
+    $('dt-hd').textContent=dh; $('dt-hd').style.color=dc; $('dt-msg').textContent=dm;
+    $('dt-needle').style.left=Math.max(0,Math.min(100,dt/MAXT*100))+'%';
+    $('dt-design').style.left=(DESIGN_DT/MAXT*100)+'%';
+    $('m-dt').textContent=dt.toFixed(1)+' °C'; $('m-pct').textContent=Math.round(pct)+'%';
+    $('m-flow').textContent=flow.toFixed(1)+' L/s'; $('m-temps').textContent='7 / '+chwr.toFixed(1);
+
+    // weather / condenser side
+    const cws=wb+4, lift=wb+5, PLR=load/CAP;
+    let fplr=1+1.2*Math.pow(PLR-0.5,2); if(PLR<0.25) fplr+=(0.25-PLR)*1.5;
+    const flift=1+0.025*(lift-LREF);
+    const kwton=Math.max(0.3, 0.55*fplr*flift); tgtKW=kwton;
+    const [kh,kc,kb,km]=kwBand(kwton);
+    $('kw-status').style.background=kb; $('kw-dot').style.background=kc;
+    $('kw-hd').textContent=kh; $('kw-hd').style.color=kc; $('kw-msg').textContent=km;
+    $('kw-needle').style.left=Math.max(0,Math.min(100,(kwton-0.4)/0.6*100))+'%';
+    $('kw-design').style.left=((0.6-0.4)/0.6*100)+'%';
+    $('m-wb').textContent=wb+' °C'; $('m-cws').textContent=cws+' °C';
+    $('m-lift').textContent=Math.round(lift)+' °C'; $('m-kw').textContent=kwton.toFixed(2);
+  }
+
+  function drawSpark(id,hist,lo,hi,zones,design){
+    const W=800,H=120, y=v=>H-Math.max(0,Math.min(1,(v-lo)/(hi-lo)))*H;
+    let bg='';
+    zones.forEach(z=>{ bg+='<rect x="0" y="'+y(z.hi)+'" width="800" height="'+(y(z.lo)-y(z.hi))+'" fill="'+z.c+'"/>'; });
+    const pts=hist.map((v,i)=>(i/(N-1)*W).toFixed(1)+','+y(v).toFixed(1)).join(' ');
+    $(id).innerHTML=bg+
+      '<line x1="0" y1="'+y(design)+'" x2="800" y2="'+y(design)+'" stroke="#888" stroke-dasharray="5 5" stroke-width="1"/>'+
+      '<polyline points="'+pts+'" fill="none" stroke="var(--cold)" stroke-width="2.5"/>';
+  }
+  function redraw(){
+    drawSpark('spark-dt',dtH,0,MAXT,[
+      {lo:4,hi:MAXT,c:'var(--greenbg)'},{lo:2.5,hi:4,c:'var(--amberbg)'},{lo:0,hi:2.5,c:'var(--redbg)'}],DESIGN_DT);
+    drawSpark('spark-kw',kwH,0.4,1.0,[
+      {lo:0.4,hi:0.65,c:'var(--greenbg)'},{lo:0.65,hi:0.82,c:'var(--amberbg)'},{lo:0.82,hi:1.0,c:'var(--redbg)'}],0.6);
+  }
+  function tick(){
+    const nd=Math.max(0,Math.min(MAXT, dtH[N-1]+(tgtDT-dtH[N-1])*0.25+(Math.random()-0.5)*0.1));
+    const nk=Math.max(0.4,Math.min(1.0, kwH[N-1]+(tgtKW-kwH[N-1])*0.25+(Math.random()-0.5)*0.015));
+    dtH.push(nd); dtH.shift(); kwH.push(nk); kwH.shift(); redraw();
+  }
+
+  ['load','pump','fault','wb'].forEach(id=>$(id).addEventListener('input',update));
+  update(); redraw(); setInterval(tick,650);
+</script>
+</body>
+</html>

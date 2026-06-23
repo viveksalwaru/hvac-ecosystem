@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HVAC Chiller Plant — Concepts &amp; Terminology</title>
+<style>
+  :root{
+    --cold:#2f6fed; --warm:#e8833a; --red:#c12f2f; --green:#1c8a4d; --purple:#8e54c4;
+    --ink:#1d2430; --muted:#5b6573; --line:#e6eaf0; --bg:#f6f8fb; --card:#fff;
+    --chip:#eef3fb;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); line-height:1.65;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:860px; margin:0 auto; padding:0 18px 64px;}
+  header{padding:38px 0 22px;}
+  .kicker{font-size:12.5px; font-weight:600; letter-spacing:.04em; color:var(--cold); text-transform:uppercase;}
+  h1{font-size:28px; font-weight:700; margin:6px 0 8px;}
+  .lede{color:var(--muted); font-size:15.5px; margin:0;}
+  nav{position:sticky; top:0; background:rgba(246,248,251,.92); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line); padding:10px 0; margin-bottom:8px; z-index:5;}
+  nav .inner{max-width:860px; margin:0 auto; padding:0 18px; display:flex; gap:8px; flex-wrap:wrap;}
+  nav a{font-size:12.5px; color:var(--muted); text-decoration:none; padding:5px 11px; border-radius:20px; background:var(--chip);}
+  nav a:hover{color:var(--cold);}
+  section{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:24px 26px; margin:18px 0;}
+  h2{font-size:20px; font-weight:700; margin:0 0 4px; display:flex; align-items:center; gap:10px;}
+  .sec-sub{color:var(--muted); font-size:14px; margin:0 0 18px;}
+  .num{display:inline-flex; width:28px; height:28px; border-radius:8px; background:var(--cold); color:#fff;
+    font-size:14px; font-weight:700; align-items:center; justify-content:center; flex:none;}
+  h3{font-size:15.5px; font-weight:600; margin:20px 0 8px;}
+  p{margin:8px 0;}
+  .formula{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:14px;
+    background:#0f1b2d; color:#e7eefb; padding:13px 16px; border-radius:10px; overflow-x:auto; white-space:pre;}
+  .callout{border-left:4px solid var(--cold); background:#eef4ff; border-radius:0 10px 10px 0; padding:12px 16px; margin:14px 0; font-size:14.5px;}
+  .callout.bad{border-left-color:var(--red); background:#fdeeee;}
+  .callout.good{border-left-color:var(--green); background:#e9f6ee;}
+  .callout b{font-weight:700;}
+  .grid{display:grid; gap:14px; margin:16px 0;}
+  .g2{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));}
+  .tile{border:1px solid var(--line); border-radius:12px; padding:14px 16px; background:#fbfcfe;}
+  .tile .lbl{font-size:12.5px; color:var(--muted);}
+  .tile .big{font-size:22px; font-weight:700; margin-top:2px;}
+  .tile .small{font-size:13px; color:var(--muted); margin-top:4px;}
+  .pill{display:inline-block; font-size:11.5px; font-weight:600; padding:2px 9px; border-radius:20px;}
+  .p-cold{background:#e7f0ff; color:#1f5ad6;} .p-warm{background:#fdeede; color:#a8600f;}
+  .p-grn{background:#e6f5ec; color:#157a43;} .p-prp{background:#f1ebfa; color:#6f3fb0;} .p-red{background:#fbe7e7; color:#b32626;}
+  table{width:100%; border-collapse:collapse; font-size:14px; margin:12px 0;}
+  th,td{text-align:left; padding:9px 10px; border-bottom:1px solid var(--line);}
+  th{font-size:12.5px; color:var(--muted); font-weight:600;}
+  .barwrap{margin:8px 0 4px;}
+  .stack{display:flex; height:34px; border-radius:9px; overflow:hidden;}
+  .stack div{display:flex; align-items:center; justify-content:center; color:#fff; font-size:12.5px; font-weight:600;}
+  .legend{display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--muted); margin-top:8px;}
+  .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .sw{width:12px; height:12px; border-radius:3px;}
+  ol.savings{padding-left:0; counter-reset:s; list-style:none; margin:8px 0;}
+  ol.savings li{counter-increment:s; position:relative; padding:10px 12px 10px 46px; border:1px solid var(--line); border-radius:10px; margin:8px 0; background:#fbfcfe; font-size:14.5px;}
+  ol.savings li::before{content:counter(s); position:absolute; left:12px; top:10px; width:24px; height:24px; border-radius:50%; background:var(--green); color:#fff; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center;}
+  .conv{display:flex; align-items:center; gap:14px; flex-wrap:wrap; background:#fbfcfe; border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin:14px 0;}
+  .conv input[type=range]{flex:1; min-width:160px; accent-color:var(--cold);}
+  .conv .out{font-size:20px; font-weight:700;}
+  .muted{color:var(--muted);}
+  svg{max-width:100%; height:auto;}
+  footer{color:var(--muted); font-size:12.5px; text-align:center; margin-top:24px;}
+</style>
+</head>
+<body>
+<nav><div class="inner">
+  <a href="#capacity">1 · Capacity</a>
+  <a href="#efficiency">2 · Efficiency</a>
+  <a href="#dashboard">3 · Terms</a>
+  <a href="#levers">4 · Levers</a>
+  <a href="#factors">5 · Factors</a>
+  <a href="#savings">6 · Savings</a>
+  <a href="#flow">7 · Flow</a>
+</div></nav>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">Chiller plant fundamentals</div>
+    <h1>HVAC concepts &amp; terminology</h1>
+    <p class="lede">A plain-language reference for the core ideas behind a chilled-water plant: what the numbers mean, what you can control, and where the energy goes.</p>
+  </header>
+
+  <!-- ===== 1. CAPACITY ===== -->
+  <section id="capacity">
+    <h2><span class="num">1</span> Cooling capacity — TR and kW</h2>
+    <p class="sec-sub">How much heat a chiller can move — not how much electricity it uses.</p>
+
+    <p>Cooling capacity is measured in <b>tons of refrigeration (TR)</b>. One ton is a fixed amount of heat-removal rate:</p>
+    <div class="formula">1 TR = 3.517 kW (thermal) = 3.517 kJ per second
+100 TR = 351.7 kW = 351.7 kJ of heat removed every second</div>
+
+    <p>So a <b>100 TR chiller</b> can pull <b>351.7 kW of heat</b> out of the building every second.</p>
+
+    <div class="callout bad">
+      <b>Common misconception:</b> a 100 TR chiller does <i>not</i> consume 351.7 kW of electricity.
+      That number is its <b>cooling capacity</b> (heat moved). The electricity it actually draws is much smaller —
+      often <b>60–80 kW</b> — depending on how efficient it is.
+    </div>
+
+    <div class="grid g3">
+      <div class="tile"><div class="lbl">Cooling capacity</div><div class="big">351.7 kW</div><div class="small">heat removed (thermal)</div></div>
+      <div class="tile"><div class="lbl">Electricity drawn</div><div class="big">60–80 kW</div><div class="small">depends on efficiency</div></div>
+      <div class="tile"><div class="lbl">The ratio of these two</div><div class="big">efficiency</div><div class="small">see section 2 →</div></div>
+    </div>
+  </section>
+
+  <!-- ===== 2. EFFICIENCY ===== -->
+  <section id="efficiency">
+    <h2><span class="num">2</span> Efficiency — kW/TR and COP</h2>
+    <p class="sec-sub">Two ways of expressing the same idea: heat moved per unit of electricity.</p>
+
+    <h3>kW/TR <span class="pill p-cold">lower is better</span></h3>
+    <p>Electricity consumed per ton of cooling produced.</p>
+    <div class="formula">kW/TR = electricity consumed ÷ cooling produced
+       = 70 kW ÷ 100 TR
+       = 0.70</div>
+    <p>Meaning: it takes <b>0.70 kW of electricity to make 1 TR of cooling</b>.</p>
+
+    <h3>COP — coefficient of performance <span class="pill p-grn">higher is better</span></h3>
+    <p>Cooling output divided by electrical input (both in kW), so it's a pure ratio with no units.</p>
+    <div class="formula">COP = cooling output ÷ electrical input
+    = 351.7 kW ÷ 70 kW
+    = 5.02</div>
+    <p>Meaning: every <b>1 kW of electricity produces about 5 kW of cooling</b>.</p>
+
+    <div class="callout">
+      The two are just flip sides of each other: <b>COP = 3.517 ÷ (kW/TR)</b>. Drag the slider to feel the relationship.
+    </div>
+    <div class="conv">
+      <span class="muted" style="width:90px;">kW/TR</span>
+      <input type="range" id="kwtr" min="0.40" max="1.20" step="0.01" value="0.70">
+      <span class="out" id="kwtr-out">0.70</span>
+      <span class="muted">→ COP</span>
+      <span class="out" id="cop-out" style="color:var(--green);">5.02</span>
+    </div>
+  </section>
+
+  <!-- ===== 3. DASHBOARD / TERMS ===== -->
+  <section id="dashboard">
+    <h2><span class="num">3</span> Plant dashboard &amp; key terms</h2>
+    <p class="sec-sub">A typical at-a-glance view, and the vocabulary behind it.</p>
+
+    <div class="grid g3">
+      <div class="tile"><div class="lbl">Plant capacity</div><div class="big">500 TR</div></div>
+      <div class="tile"><div class="lbl">Current load</div><div class="big">420 TR</div></div>
+      <div class="tile"><div class="lbl">Power consumption</div><div class="big">280 kW</div></div>
+      <div class="tile"><div class="lbl">Plant efficiency</div><div class="big">0.67 kW/TR</div><div class="small">280 ÷ 420</div></div>
+      <div class="tile"><div class="lbl">COP</div><div class="big">5.25</div><div class="small">3.517 ÷ 0.67</div></div>
+    </div>
+
+    <h3>The vocabulary</h3>
+    <table>
+      <tr><th>Term</th><th>Unit</th><th>What it means</th></tr>
+      <tr><td>Plant cooling capacity</td><td>TR</td><td>Maximum heat the plant can remove</td></tr>
+      <tr><td>Plant power consumption</td><td>kW</td><td>Electricity the plant draws right now</td></tr>
+      <tr><td>Plant efficiency</td><td>kW/TR</td><td>Electricity per ton of cooling (lower = better)</td></tr>
+      <tr><td>kW (thermal)</td><td>kW</td><td>Heat — 1 TR = 3.517 kW</td></tr>
+      <tr><td>kW (electrical)</td><td>kW</td><td>The electricity the chiller draws to move that heat</td></tr>
+      <tr><td>Cooling load</td><td>TR / kW</td><td>The heat the building currently needs removed</td></tr>
+      <tr><td>ΔT (delta-T)</td><td>°C</td><td>Difference between return and supply chilled water</td></tr>
+      <tr><td>Flow rate</td><td>L/s</td><td>How much water is being circulated</td></tr>
+      <tr><td>CHWR</td><td>°C</td><td>Chilled-water return — warm water coming back from the building</td></tr>
+      <tr><td>Pump power</td><td>kW</td><td>Electricity used by the circulating pumps</td></tr>
+    </table>
+    <div class="callout"><b>Two meanings of "kW":</b> thermal kW is heat; electrical kW is power drawn. kW/TR is the ratio between them — keep the two clearly separated.</div>
+  </section>
+
+  <!-- ===== 4. LEVERS ===== -->
+  <section id="levers">
+    <h2><span class="num">4</span> What you control vs. what you don't</h2>
+    <p class="sec-sub">Control levers can be set manually or by an AI optimizer; environment and demand are given.</p>
+
+    <div class="grid g2">
+      <div class="tile">
+        <div class="lbl"><span class="pill p-grn">you control</span></div>
+        <h3 style="margin-top:8px;">Control levers</h3>
+        <p style="margin:4px 0;">Pump speed</p>
+        <p style="margin:4px 0;">CHWS setpoint (chilled-water supply temperature)</p>
+        <p style="margin:4px 0;">Cooling-tower fan speed</p>
+      </div>
+      <div class="tile">
+        <div class="lbl"><span class="pill p-warm">given to you</span></div>
+        <h3 style="margin-top:8px;">Environment &amp; demand</h3>
+        <p style="margin:4px 0;">Cooling load (building heat)</p>
+        <p style="margin:4px 0;">Outdoor wet-bulb temperature</p>
+      </div>
+    </div>
+
+    <h3>Heat balance — why the condenser is bigger than the load</h3>
+    <p>The chiller absorbs the building's heat <i>and</i> its own compressor's electrical work, then rejects the sum. For a 100 TR chiller drawing 70 kW:</p>
+    <svg viewBox="0 0 680 200" role="img" aria-label="Heat balance: 351.7 kW cooling plus 70 kW electricity equals 421.7 kW rejected">
+      <rect x="270" y="70" width="140" height="76" rx="9" fill="#eef4ff" stroke="#9cb8ef"/>
+      <text x="340" y="103" text-anchor="middle" font-size="14" font-weight="600" fill="#1d2430">Chiller</text>
+      <text x="340" y="123" text-anchor="middle" font-size="12" fill="#5b6573">100 TR</text>
+      <line x1="70" y1="108" x2="270" y2="108" stroke="#2f6fed" stroke-width="5" marker-end="url(#h1)"/>
+      <text x="78" y="96" font-size="12" fill="#2f6fed">heat from building</text>
+      <text x="78" y="130" font-size="13" font-weight="700" fill="#1d2430">351.7 kW</text>
+      <line x1="340" y1="195" x2="340" y2="146" stroke="#c12f2f" stroke-width="5" marker-end="url(#h2)"/>
+      <text x="352" y="180" font-size="12" fill="#c12f2f">electricity in</text>
+      <text x="352" y="196" font-size="13" font-weight="700" fill="#1d2430">70 kW</text>
+      <line x1="410" y1="108" x2="610" y2="108" stroke="#e8833a" stroke-width="5" marker-end="url(#h3)"/>
+      <text x="602" y="96" text-anchor="end" font-size="12" fill="#e8833a">rejected at condenser/tower</text>
+      <text x="602" y="130" text-anchor="end" font-size="13" font-weight="700" fill="#1d2430">421.7 kW</text>
+      <defs>
+        <marker id="h1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2f6fed"/></marker>
+        <marker id="h2" markerWidth="8" markerHeight="8" refX="3" refY="0" orient="auto"><path d="M0,6 L6,6 L3,0 Z" fill="#c12f2f"/></marker>
+        <marker id="h3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e8833a"/></marker>
+      </defs>
+    </svg>
+    <div class="callout"><b>351.7 kW + 70 kW = 421.7 kW.</b> The condenser must reject the cooling load <i>plus</i> the compressor's electrical work.</div>
+  </section>
+
+  <!-- ===== 5. FACTORS ===== -->
+  <section id="factors">
+    <h2><span class="num">5</span> What determines plant efficiency</h2>
+    <p class="sec-sub">Where the electricity goes, and the knobs that move the numbers.</p>
+
+    <h3>Where the power is consumed</h3>
+    <div class="barwrap">
+      <div class="stack">
+        <div style="width:78%; background:var(--cold);">Compressor 70–85%</div>
+        <div style="width:15%; background:var(--purple);">Pumps 10–20%</div>
+        <div style="width:7%; background:var(--warm);">Towers 5–15%</div>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--cold)"></i> Compressor — largest consumer</span>
+        <span><i class="sw" style="background:var(--purple)"></i> CHW + CW pumps — medium</span>
+        <span><i class="sw" style="background:var(--warm)"></i> Cooling-tower fans — medium</span>
+      </div>
+    </div>
+    <p>The chiller itself contains the <b>evaporator, compressor and condenser</b>. Of the whole plant, the <b>compressor dominates the electricity bill</b>, which is why anything that eases the compressor's job (lower lift, better staging) saves the most.</p>
+
+    <h3>Two water loops</h3>
+    <p>(1) the <b>chilled-water loop</b> from the AHU, and (2) the <b>condenser-water loop</b> in and out of the cooling tower.</p>
+
+    <h3>Levers that set condenser-water temperature</h3>
+    <p>Colder condenser water lowers the compressor's lift and its power. These factors control it:</p>
+    <div class="grid g2">
+      <div class="tile"><b>Cooling-tower fan speed</b><div class="small">higher RPM → more heat rejection → colder water</div></div>
+      <div class="tile"><b>Number of towers running</b><div class="small">more surface area available for rejection</div></div>
+      <div class="tile"><b>Condenser-water pump speed</b><div class="small">flow from condenser to tower</div></div>
+      <div class="tile"><b>Fouling (clean vs. dirty)</b><div class="small">scale/dirt reduces heat transfer</div></div>
+      <div class="tile"><b>Chiller staging</b><div class="small">sharing load across machines for best efficiency</div></div>
+    </div>
+  </section>
+
+  <!-- ===== 6. SAVINGS ===== -->
+  <section id="savings">
+    <h2><span class="num">6</span> Where the biggest savings come from</h2>
+    <p class="sec-sub">In rough order of impact for most plants.</p>
+    <ol class="savings">
+      <li><b>Raise CHWS slightly</b> when comfort allows — less lift, lower compressor power.</li>
+      <li><b>Optimize cooling-tower fan speed</b> — balance fan energy against colder, cheaper condenser water.</li>
+      <li><b>Optimize chiller staging</b> — run the right number of machines at their efficient load.</li>
+      <li><b>Optimize pump speeds</b> — circulate only as much water as the load needs.</li>
+      <li><b>Maintain a proper ΔT</b> — avoid the low-ΔT, over-pumping trap.</li>
+    </ol>
+  </section>
+
+  <!-- ===== 7. FLOW ===== -->
+  <section id="flow">
+    <h2><span class="num">7</span> Overall components &amp; flow</h2>
+    <p class="sec-sub">How heat travels from the rooms all the way out to the sky.</p>
+
+    <div class="grid g3" style="margin-bottom:8px;">
+      <div class="tile"><b>Chiller</b><div class="small">evaporator · compressor · condenser</div></div>
+      <div class="tile"><b>Pumps</b><div class="small">CHW (chilled) · CW (condenser)</div></div>
+      <div class="tile"><b>Fans</b><div class="small">AHU fan · cooling-tower fan</div></div>
+    </div>
+
+    <svg viewBox="0 0 680 250" role="img" aria-label="Flow from building through AHU and chiller to cooling tower">
+      <rect x="30" y="60" width="150" height="80" rx="9" fill="#eef4ff" stroke="#9cb8ef"/>
+      <text x="105" y="95" text-anchor="middle" font-size="13" font-weight="600">Cooling tower</text>
+      <text x="105" y="113" text-anchor="middle" font-size="11" fill="#5b6573">rejects heat to air</text>
+
+      <rect x="265" y="40" width="150" height="170" rx="9" fill="#fbfcfe" stroke="#c4ccd8"/>
+      <text x="340" y="62" text-anchor="middle" font-size="13" font-weight="600">Chiller</text>
+      <text x="340" y="92" text-anchor="middle" font-size="11" fill="#e8833a">condenser</text>
+      <text x="340" y="128" text-anchor="middle" font-size="11" fill="#8e54c4">compressor</text>
+      <text x="340" y="164" text-anchor="middle" font-size="11" fill="#2f6fed">evaporator</text>
+
+      <rect x="470" y="60" width="90" height="80" rx="9" fill="#fbfcfe" stroke="#c4ccd8"/>
+      <text x="515" y="95" text-anchor="middle" font-size="12" font-weight="600">AHU</text>
+      <text x="515" y="113" text-anchor="middle" font-size="10.5" fill="#5b6573">coil + fan</text>
+
+      <rect x="600" y="60" width="50" height="120" rx="9" fill="#fbfcfe" stroke="#c4ccd8"/>
+      <text x="625" y="116" text-anchor="middle" font-size="11" font-weight="600">Bldg</text>
+
+      <line x1="265" y1="90" x2="180" y2="90" stroke="#e8833a" stroke-width="4" marker-end="url(#f1)"/>
+      <line x1="180" y1="115" x2="265" y2="115" stroke="#2f6fed" stroke-width="4" marker-end="url(#f2)"/>
+      <line x1="470" y1="92" x2="415" y2="92" stroke="#2f6fed" stroke-width="4" marker-end="url(#f3)"/>
+      <line x1="415" y1="150" x2="470" y2="150" stroke="#e8833a" stroke-width="4" marker-end="url(#f4)"/>
+      <line x1="600" y1="92" x2="560" y2="92" stroke="#e8833a" stroke-width="4" marker-end="url(#f5)"/>
+      <line x1="560" y1="150" x2="600" y2="150" stroke="#2f6fed" stroke-width="4" marker-end="url(#f6)"/>
+
+      <text x="225" y="148" text-anchor="middle" font-size="10.5" fill="#5b6573">condenser loop</text>
+      <text x="498" y="178" text-anchor="middle" font-size="10.5" fill="#5b6573">chilled loop</text>
+      <defs>
+        <marker id="f1" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 Z" fill="#e8833a"/></marker>
+        <marker id="f2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 Z" fill="#2f6fed"/></marker>
+        <marker id="f3" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 Z" fill="#2f6fed"/></marker>
+        <marker id="f4" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 Z" fill="#e8833a"/></marker>
+        <marker id="f5" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 Z" fill="#e8833a"/></marker>
+        <marker id="f6" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 Z" fill="#2f6fed"/></marker>
+      </defs>
+    </svg>
+
+    <p>The <b>building</b> generates heat (people, machines, sunlight). The <b>AHU fan</b> pulls that warm air across a <b>cooling coil</b>; cold water inside the coil absorbs the heat, so cool air returns to the rooms and the water leaves warm. The <b>CHW pump</b> sends that warm water to the chiller's <b>evaporator</b>, which chills it again — the difference between leaving and returning water is <b>ΔT</b>.</p>
+    <p>Inside the chiller, the <b>compressor</b> moves the absorbed heat from the evaporator to the <b>condenser</b>. Condenser water flowing through (driven by the <b>CW pump</b>) absorbs that heat and carries it to the <b>cooling tower</b>, which releases it to the atmosphere. Then the cycle repeats.</p>
+  </section>
+
+  <footer>HVAC chiller plant concepts · reference sheet</footer>
+</div>
+
+<script>
+  const kwtr=document.getElementById('kwtr');
+  function upd(){
+    const v=parseFloat(kwtr.value);
+    document.getElementById('kwtr-out').textContent=v.toFixed(2);
+    document.getElementById('cop-out').textContent=(3.517/v).toFixed(2);
+  }
+  kwtr.addEventListener('input',upd); upd();
+  document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',e=>{
+    e.preventDefault(); document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'});
+  }));
+</script>
+</body>
+</html>

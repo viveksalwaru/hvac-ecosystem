@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chiller Plant — Animated Working Diagram</title>
+<style>
+  :root{
+    --spd: 1;
+    --dur: calc(1.6s / var(--spd));
+    --fandur: calc(2.2s / var(--spd));
+    --cold:#2f6fed; --warm:#e8833a; --ref:#9b59d0; --air:#3aa687;
+    --pipe:#d3d8e0; --ink:#1f2530; --muted:#5b6573; --line:#e4e8ee;
+    --bg:#f7f9fc; --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1040px; margin:0 auto; padding:24px 18px 48px;}
+  h1{font-size:22px; font-weight:600; margin:0 0 4px;}
+  .sub{color:var(--muted); font-size:14px; margin:0 0 20px;}
+  .controls{display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:14px 18px; margin-bottom:18px;}
+  button{font:inherit; font-size:14px; padding:8px 16px; border-radius:8px;
+    border:1px solid #cfd6e0; background:#fff; cursor:pointer;}
+  button:hover{background:#f0f3f8;}
+  .ctl-label{font-size:14px; color:var(--muted);}
+  input[type=range]{width:160px;}
+  .stage{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:8px;}
+  svg{width:100%; height:auto; display:block;}
+  .legend{display:flex; gap:20px; flex-wrap:wrap; margin-top:16px; font-size:13.5px; color:var(--muted);}
+  .legend span{display:inline-flex; align-items:center; gap:7px;}
+  .sw{width:22px; height:5px; border-radius:3px; display:inline-block;}
+  .note{margin-top:20px; font-size:14px; line-height:1.7; color:#333;}
+  .note b{font-weight:600;}
+
+  .block{fill:#fbfcfe; stroke:#c4ccd8; stroke-width:1.5;}
+  .block-cool{fill:#eef4ff; stroke:#9cb8ef;}
+  .block-warm{fill:#fdf1e7; stroke:#e6b487;}
+  .title{font-size:15px; font-weight:600; fill:var(--ink);}
+  .sub-t{font-size:11.5px; fill:var(--muted);}
+  .tag{font-size:11.5px; fill:var(--muted);}
+  .tag-cold{fill:var(--cold);} .tag-warm{fill:var(--warm);}
+  .tag-ref{fill:var(--ref);} .tag-air{fill:var(--air);}
+
+  .pipe{fill:none; stroke:var(--pipe); stroke-width:9; stroke-linecap:round;}
+  .flow{fill:none; stroke-width:5; stroke-linecap:round; stroke-dasharray:0.1 15;
+    animation:flow var(--dur) linear infinite;}
+  .cold{stroke:var(--cold);} .warm{stroke:var(--warm);}
+  .refr{stroke:var(--ref);} .airf{stroke:var(--air);}
+  @keyframes flow{ to{ stroke-dashoffset:-15.1; } }
+
+  .fan{transform-box:fill-box; transform-origin:center; animation:spin var(--fandur) linear infinite;}
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .blade{fill:#7d8aa0;} .hub{fill:#4a5468;}
+
+  .pulse{transform-box:fill-box; transform-origin:center; animation:pulse calc(1.1s / var(--spd)) ease-in-out infinite;}
+  @keyframes pulse{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.07);} }
+
+  .paused .flow, .paused .fan, .paused .pulse{animation-play-state:paused;}
+  .heatwave{fill:none; stroke:#e87a7a; stroke-width:2; opacity:.7;
+    stroke-dasharray:3 6; animation:flow calc(1.4s / var(--spd)) linear infinite;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Chiller plant — how it works</h1>
+  <p class="sub">Animated water (and refrigerant) flow across every component, from the building to the cooling tower.</p>
+
+  <div class="controls">
+    <button id="toggle">Pause</button>
+    <span class="ctl-label">Flow speed</span>
+    <input type="range" id="speed" min="0.25" max="3" step="0.05" value="1">
+    <span id="spdval" class="ctl-label" style="min-width:36px;">1.0×</span>
+  </div>
+
+  <div class="stage" id="stage">
+    <svg viewBox="0 0 1000 620" role="img" aria-label="Animated chiller plant diagram">
+
+      <!-- ===== Pipes: base conduits first, then animated flow ===== -->
+
+      <!-- Condenser water loop -->
+      <path class="pipe" d="M375,120 L262,120"/>
+      <path class="pipe" d="M262,182 L375,182"/>
+      <!-- Refrigerant loop (inside chiller) -->
+      <path class="pipe" d="M445,375 L445,205"/>
+      <path class="pipe" d="M545,205 L545,375"/>
+      <!-- Chilled water loop -->
+      <path class="pipe" d="M600,405 L700,405"/>
+      <path class="pipe" d="M700,470 L600,470"/>
+      <!-- Air loop -->
+      <path class="pipe" d="M880,398 L851,398"/>
+      <path class="pipe" d="M851,462 L880,462"/>
+
+      <!-- animated flows -->
+      <path class="flow warm" d="M375,120 L262,120"/>
+      <path class="flow cold" d="M262,182 L375,182"/>
+      <path class="flow refr" d="M445,375 L445,205"/>
+      <path class="flow refr" d="M545,205 L545,375"/>
+      <path class="flow cold" d="M600,405 L700,405"/>
+      <path class="flow warm" d="M700,470 L600,470"/>
+      <path class="flow warm" d="M880,398 L851,398"/>
+      <path class="flow airf" d="M851,462 L880,462"/>
+
+      <!-- ===== Cooling tower ===== -->
+      <rect class="block block-cool" x="80" y="60" width="182" height="170" rx="10"/>
+      <g class="fan" transform="translate(171,92)">
+        <ellipse class="blade" rx="26" ry="7"/>
+        <ellipse class="blade" rx="26" ry="7" transform="rotate(60)"/>
+        <ellipse class="blade" rx="26" ry="7" transform="rotate(120)"/>
+        <circle class="hub" r="6"/>
+      </g>
+      <text class="title" x="171" y="148" text-anchor="middle">Cooling tower</text>
+      <text class="sub-t" x="171" y="167" text-anchor="middle">fan rejects heat to air</text>
+      <text class="sub-t" x="171" y="186" text-anchor="middle">(condenser water cooled)</text>
+
+      <!-- ===== Chiller container ===== -->
+      <rect x="360" y="70" width="225" height="430" rx="12" fill="none" stroke="#b3bdcc" stroke-width="2" stroke-dasharray="6 5"/>
+      <text class="title" x="472" y="55" text-anchor="middle">Chiller</text>
+
+      <!-- Condenser (top) -->
+      <rect class="block block-warm" x="378" y="92" width="190" height="100" rx="10"/>
+      <text class="title" x="473" y="132" text-anchor="middle" font-size="14">Condenser</text>
+      <text class="sub-t" x="473" y="150" text-anchor="middle">gives off heat to CW</text>
+
+      <!-- Compressor (middle) -->
+      <circle class="block pulse" cx="445" cy="290" r="40" fill="#ede3f7" stroke="#b794d8" stroke-width="1.5"/>
+      <text class="title" x="445" y="286" text-anchor="middle" font-size="13">Compr-</text>
+      <text class="title" x="445" y="302" text-anchor="middle" font-size="13">essor</text>
+
+      <!-- Evaporator (bottom) -->
+      <rect class="block block-cool" x="378" y="388" width="190" height="100" rx="10"/>
+      <text class="title" x="473" y="428" text-anchor="middle" font-size="14">Evaporator</text>
+      <text class="sub-t" x="473" y="446" text-anchor="middle">absorbs heat from CHW</text>
+
+      <!-- expansion valve on liquid line -->
+      <path d="M538,360 L552,352 L552,368 Z" fill="#9b59d0"/>
+      <path d="M552,360 L538,352 L538,368 Z" fill="#9b59d0"/>
+
+      <!-- ===== AHU ===== -->
+      <rect class="block" x="700" y="350" width="151" height="160" rx="10"/>
+      <text class="title" x="775" y="372" text-anchor="middle" font-size="14">AHU</text>
+      <!-- cooling coil (zigzag) -->
+      <path d="M716,392 q14,10 0,20 q-14,10 0,20 q14,10 0,20 q-14,10 0,20 q14,10 0,20"
+            fill="none" stroke="var(--cold)" stroke-width="3.5"/>
+      <text class="sub-t" x="724" y="500" text-anchor="middle">coil</text>
+      <!-- AHU fan -->
+      <g class="fan" transform="translate(810,432)">
+        <ellipse class="blade" rx="22" ry="6"/>
+        <ellipse class="blade" rx="22" ry="6" transform="rotate(60)"/>
+        <ellipse class="blade" rx="22" ry="6" transform="rotate(120)"/>
+        <circle class="hub" r="5"/>
+      </g>
+      <text class="sub-t" x="810" y="492" text-anchor="middle">fan</text>
+
+      <!-- ===== Building ===== -->
+      <rect class="block" x="880" y="320" width="110" height="220" rx="10"/>
+      <text class="title" x="935" y="344" text-anchor="middle" font-size="14">Building</text>
+      <!-- heat-source icons -->
+      <circle cx="915" cy="392" r="9" fill="#ffd27a" stroke="#e0a93b"/>
+      <text x="915" y="396" text-anchor="middle" font-size="10" fill="#8a6b1f">☀</text>
+      <rect x="945" y="384" width="22" height="16" rx="2" fill="#cdd6e3" stroke="#9aa7ba"/>
+      <circle cx="920" cy="430" r="7" fill="#cdd6e3" stroke="#9aa7ba"/>
+      <rect x="912" y="437" width="16" height="14" rx="3" fill="#cdd6e3" stroke="#9aa7ba"/>
+      <path class="heatwave" d="M905,470 q8,-10 16,0 q8,10 16,0 q8,-10 16,0"/>
+      <text class="sub-t" x="935" y="512" text-anchor="middle">heat from</text>
+      <text class="sub-t" x="935" y="528" text-anchor="middle">people &amp; machines</text>
+
+      <!-- ===== Pumps ===== -->
+      <circle cx="312" cy="182" r="13" fill="#fff" stroke="var(--cold)" stroke-width="2.5"/>
+      <text x="312" y="186" text-anchor="middle" font-size="11" font-weight="600" fill="var(--cold)">P</text>
+      <text class="tag" x="312" y="214" text-anchor="middle">CW pump</text>
+
+      <circle cx="650" cy="405" r="13" fill="#fff" stroke="var(--cold)" stroke-width="2.5"/>
+      <text x="650" y="409" text-anchor="middle" font-size="11" font-weight="600" fill="var(--cold)">P</text>
+      <text class="tag" x="650" y="385" text-anchor="middle">CHW pump</text>
+
+      <!-- ===== Pipe labels ===== -->
+      <text class="tag tag-warm" x="318" y="111" text-anchor="middle">CW return ~32°C</text>
+      <text class="tag tag-cold" x="318" y="172" text-anchor="middle">CW supply ~27°C</text>
+      <text class="tag tag-ref" x="408" y="300" text-anchor="end">refrigerant</text>
+      <text class="tag tag-ref" x="408" y="316" text-anchor="end">vapor ↑</text>
+      <text class="tag tag-ref" x="582" y="300" text-anchor="start">liquid ↓</text>
+      <text class="tag tag-cold" x="648" y="439" text-anchor="middle">CHWS 7°C</text>
+      <text class="tag tag-warm" x="648" y="462" text-anchor="middle">CHWR 12°C</text>
+      <text class="tag" x="630" y="487" text-anchor="middle" font-weight="600" fill="var(--ink)">ΔT = 5°C</text>
+      <text class="tag tag-warm" x="865" y="392" text-anchor="middle">warm</text>
+      <text class="tag tag-air" x="865" y="478" text-anchor="middle">cool</text>
+
+      <!-- flow direction note -->
+      <text class="sub-t" x="171" y="250" text-anchor="middle"></text>
+    </svg>
+  </div>
+
+  <div class="legend">
+    <span><i class="sw" style="background:var(--cold)"></i> chilled / cold water</span>
+    <span><i class="sw" style="background:var(--warm)"></i> warm return water</span>
+    <span><i class="sw" style="background:var(--ref)"></i> refrigerant (inside chiller)</span>
+    <span><i class="sw" style="background:var(--air)"></i> conditioned air</span>
+  </div>
+
+  <div class="note">
+    <p><b>Follow the heat (right to left):</b> people and machines warm the <b>building</b> air. The
+    <b>AHU fan</b> pulls that warm air across the <b>cooling coil</b>; chilled water inside the coil absorbs
+    the heat and cool air returns to the rooms. The water leaves the coil warm (<b>CHWR ≈ 12°C</b>) and the
+    <b>CHW pump</b> sends it to the chiller's <b>evaporator</b>, which chills it back to <b>CHWS ≈ 7°C</b>.
+    The gap between them is <b>ΔT</b>.</p>
+    <p>Inside the chiller, the <b>compressor</b> lifts the absorbed heat (carried by the <b>refrigerant</b>)
+    from the evaporator up to the <b>condenser</b>. There, condenser water absorbs the heat and the
+    <b>CW pump</b> carries it (<b>CW return ≈ 32°C</b>) to the <b>cooling tower</b>, whose fan rejects it to
+    the outside air, returning cooler water (<b>CW supply ≈ 27°C</b>) to the condenser. The cycle repeats.</p>
+  </div>
+</div>
+
+<script>
+  const stage = document.getElementById('stage');
+  const toggle = document.getElementById('toggle');
+  const speed = document.getElementById('speed');
+  const spdval = document.getElementById('spdval');
+
+  toggle.addEventListener('click', () => {
+    const paused = stage.classList.toggle('paused');
+    toggle.textContent = paused ? 'Play' : 'Pause';
+  });
+
+  speed.addEventListener('input', () => {
+    const v = parseFloat(speed.value);
+    document.documentElement.style.setProperty('--spd', v);
+    spdval.textContent = v.toFixed(1) + '×';
+  });
+</script>
+</body>
+</html>
