@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepManthan AI - Chiller Plant &amp; the Electricity Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Space Grotesk',sans-serif;background:linear-gradient(135deg,#070B12 0%,#0A0F1A 100%);color:#DCE6F2;min-height:100vh;}
+  .header{text-align:center;padding:46px 30px 28px;border-bottom:1px solid rgba(56,225,255,.2);background:rgba(10,15,26,.8);}
+  .company-name{font-size:2.3rem;font-weight:700;background:linear-gradient(90deg,#38E1FF,#2DD4BF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .tagline{font-size:1.05rem;color:#A0D8FF;margin-top:8px;}
+  .container{max-width:940px;margin:0 auto;padding:26px 22px 70px;}
+  a.home-link{color:#38E1FF;text-decoration:none;font-size:.9rem;}
+  a.home-link:hover{text-decoration:underline;}
+  .intro{color:#A0D8FF;font-size:1rem;line-height:1.65;margin:16px 0 6px;}
+  .disclaimer{font-size:.82rem;color:#7DD3C0;font-family:'IBM Plex Mono',monospace;margin-bottom:22px;}
+  h2{font-size:1.3rem;color:#38E1FF;font-weight:600;margin:34px 0 6px;}
+  .h2sub{color:#A0D8FF;font-size:.95rem;margin-bottom:16px;}
+  .panel{background:rgba(56,225,255,.04);border:1px solid rgba(56,225,255,.2);border-radius:12px;padding:20px 22px;margin-bottom:16px;}
+  .grid{display:grid;gap:12px;}
+  .g2{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));}
+  .g4{grid-template-columns:repeat(auto-fit,minmax(135px,1fr));}
+  .tile{background:rgba(10,15,26,.6);border:1px solid rgba(56,225,255,.18);border-radius:10px;padding:13px 15px;}
+  .tile .l{font-size:.72rem;color:#7DD3C0;text-transform:uppercase;letter-spacing:.04em;}
+  .tile .v{font-size:1.25rem;font-weight:700;color:#E8F4FF;margin-top:3px;font-family:'IBM Plex Mono',monospace;}
+  .tile .s{font-size:.78rem;color:#88a4bb;margin-top:3px;}
+  .kv{font-size:.9rem;line-height:1.9;}
+  .kv .k{color:#7DD3C0;}
+  .kv .val{color:#E8F4FF;font-family:'IBM Plex Mono',monospace;float:right;}
+  .row{overflow:hidden;border-bottom:1px dashed rgba(56,225,255,.12);padding:3px 0;}
+  svg{max-width:100%;height:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:6px;}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid rgba(56,225,255,.14);vertical-align:top;}
+  th{color:#7DD3C0;font-size:.74rem;text-transform:uppercase;letter-spacing:.04em;}
+  td.amt{text-align:right;font-family:'IBM Plex Mono',monospace;color:#E8F4FF;white-space:nowrap;}
+  .tag{display:inline-block;font-size:.7rem;padding:2px 8px;border-radius:20px;font-weight:600;}
+  .t-ctrl{background:rgba(45,212,191,.16);color:#5FE6C8;}
+  .t-fix{background:rgba(255,180,84,.14);color:#FFD9A0;}
+  .stack{display:flex;height:36px;border-radius:8px;overflow:hidden;margin-top:8px;}
+  .stack div{display:flex;align-items:center;justify-content:center;color:#06121c;font-size:.72rem;font-weight:700;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.8rem;color:#A0D8FF;margin-top:10px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .sw{width:12px;height:12px;border-radius:3px;}
+  .lever{border-left:3px solid #38E1FF;background:rgba(56,225,255,.05);border-radius:0 8px 8px 0;padding:12px 15px;margin:10px 0;}
+  .lever .lt{color:#38E1FF;font-weight:600;font-size:.95rem;}
+  .lever .ld{color:#B9D4E8;font-size:.88rem;line-height:1.6;margin-top:4px;}
+  .footer{text-align:center;color:#5f7a90;font-size:.8rem;padding:30px;border-top:1px solid rgba(56,225,255,.12);}
+  b{color:#E8F4FF;font-weight:600;}
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="company-name">Chiller Plant &amp; the Electricity Board</div>
+    <div class="tagline">How the grid supply connects to — and is driven by — the chiller plant</div>
+  </div>
+
+  <div class="container">
+    <a href="index.html" class="home-link">← Back to suite</a>
+    <p class="intro">Until now we've treated the chiller plant as a machine. Here we look at the other end of the wire — the <b>electricity supply from the grid</b>. The attached MSEDCL bill is for a connection literally named <b>"Retail-1 Chiller, Retail Mall"</b>, so what the chiller plant <i>does</i> shows up directly on this bill.</p>
+    <p class="disclaimer">// Source: MSEDCL HT-II bill, Consumer 000339043030, Bill month JUL-2025. Figures in Indian format (lakh / crore).</p>
+
+    <!-- ASSOCIATION DIAGRAM -->
+    <h2>The association at a glance</h2>
+    <div class="h2sub">Two supply sources feed one metering point that powers the chiller plant.</div>
+    <div class="panel">
+      <svg viewBox="0 0 920 320" role="img" aria-label="Supply sources to metering point to chiller plant">
+        <!-- sources -->
+        <rect x="20" y="40" width="190" height="70" rx="9" fill="rgba(56,225,255,.1)" stroke="#38E1FF"/>
+        <text x="115" y="68" text-anchor="middle" font-size="14" font-weight="600" fill="#9FE6FF">MSEDCL Grid</text>
+        <text x="115" y="88" text-anchor="middle" font-size="11" fill="#A0D8FF">22 kV HT supply</text>
+
+        <rect x="20" y="150" width="190" height="86" rx="9" fill="rgba(45,212,191,.1)" stroke="#2DD4BF"/>
+        <text x="115" y="176" text-anchor="middle" font-size="13" font-weight="600" fill="#7FECD6">Open Access (renewable)</text>
+        <text x="115" y="196" text-anchor="middle" font-size="11" fill="#A0D8FF">Solar 4,400 kVA (captive)</text>
+        <text x="115" y="213" text-anchor="middle" font-size="11" fill="#A0D8FF">Wind 2,550 kVA (short-term)</text>
+
+        <!-- meter -->
+        <rect x="360" y="90" width="200" height="110" rx="10" fill="rgba(56,225,255,.08)" stroke="#38E1FF" stroke-width="1.5"/>
+        <text x="460" y="116" text-anchor="middle" font-size="14" font-weight="600" fill="#9FE6FF">HT Metering Point</text>
+        <text x="460" y="138" text-anchor="middle" font-size="11" fill="#A0D8FF">Contract demand 4,732 kVA</text>
+        <text x="460" y="156" text-anchor="middle" font-size="11" fill="#A0D8FF">Energy billed in kVAh</text>
+        <text x="460" y="174" text-anchor="middle" font-size="11" fill="#A0D8FF">Power factor · TOD slots</text>
+
+        <!-- loads -->
+        <rect x="700" y="40" width="200" height="86" rx="9" fill="rgba(56,225,255,.12)" stroke="#38E1FF"/>
+        <text x="800" y="68" text-anchor="middle" font-size="14" font-weight="700" fill="#CFF3FF">CHILLER PLANT</text>
+        <text x="800" y="88" text-anchor="middle" font-size="11" fill="#A0D8FF">compressors · CHW/CW</text>
+        <text x="800" y="104" text-anchor="middle" font-size="11" fill="#A0D8FF">pumps · tower fans</text>
+
+        <rect x="700" y="166" width="200" height="74" rx="9" fill="rgba(56,225,255,.05)" stroke="rgba(56,225,255,.4)"/>
+        <text x="800" y="194" text-anchor="middle" font-size="13" font-weight="600" fill="#9FE6FF">Other mall loads</text>
+        <text x="800" y="214" text-anchor="middle" font-size="11" fill="#A0D8FF">lighting · lifts · retail</text>
+
+        <!-- arrows -->
+        <line x1="210" y1="75" x2="360" y2="120" stroke="#38E1FF" stroke-width="3" marker-end="url(#a)"/>
+        <line x1="210" y1="190" x2="360" y2="160" stroke="#2DD4BF" stroke-width="3" marker-end="url(#b)"/>
+        <line x1="560" y1="125" x2="700" y2="83" stroke="#38E1FF" stroke-width="3" marker-end="url(#a)"/>
+        <line x1="560" y1="165" x2="700" y2="200" stroke="rgba(56,225,255,.5)" stroke-width="2.5" marker-end="url(#c)"/>
+        <!-- injection back -->
+        <path d="M360,180 C300,260 200,260 130,236" fill="none" stroke="#2DD4BF" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#b)"/>
+        <text x="250" y="285" text-anchor="middle" font-size="10.5" fill="#7FECD6">solar/wind injected &amp; banked → offsets drawal</text>
+
+        <defs>
+          <marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#38E1FF"/></marker>
+          <marker id="b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2DD4BF"/></marker>
+          <marker id="c" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(56,225,255,.6)"/></marker>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- HEADLINE NUMBERS -->
+    <h2>This month, in numbers</h2>
+    <div class="h2sub">JUL-2025 · the whole bill is essentially the cost of running this plant.</div>
+    <div class="grid g4">
+      <div class="tile"><div class="l">Total bill</div><div class="v">₹1.33 Cr</div><div class="s">₹1,32,54,460</div></div>
+      <div class="tile"><div class="l">Demand charge</div><div class="v">₹21.3 L</div><div class="s">3,549 kVA × ₹600</div></div>
+      <div class="tile"><div class="l">Energy charge</div><div class="v">₹51.0 L</div><div class="s">kVAh × ₹14.03</div></div>
+      <div class="tile"><div class="l">Total drawal</div><div class="v">11.25 L</div><div class="s">kWh this month</div></div>
+      <div class="tile"><div class="l">Power factor</div><div class="v">0.996</div><div class="s">near-perfect</div></div>
+      <div class="tile"><div class="l">Contract demand</div><div class="v">4,732</div><div class="s">kVA contracted</div></div>
+      <div class="tile"><div class="l">Peak demand</div><div class="v">3,149</div><div class="s">kVA highest recorded</div></div>
+      <div class="tile"><div class="l">Renewable</div><div class="v">8.99 L</div><div class="s">kWh injected (OA)</div></div>
+    </div>
+
+    <!-- EXTRACTED FIELDS -->
+    <h2>Key fields extracted from the bill</h2>
+    <div class="grid g2">
+      <div class="panel"><div class="kv">
+        <div style="color:#38E1FF;font-weight:600;margin-bottom:6px;">Connection</div>
+        <div class="row"><span class="k">Consumer</span><span class="val">Select Infra (Nexus)</span></div>
+        <div class="row"><span class="k">Consumer no.</span><span class="val">000339043030</span></div>
+        <div class="row"><span class="k">Service</span><span class="val">Retail-1 Chiller</span></div>
+        <div class="row"><span class="k">Tariff</span><span class="val">158 · HT-II</span></div>
+        <div class="row"><span class="k">Voltage</span><span class="val">22 kV (HT)</span></div>
+        <div class="row"><span class="k">OA type</span><span class="val">Partial Open Access</span></div>
+        <div class="row"><span class="k">Connected since</span><span class="val">10-Feb-2017</span></div>
+      </div></div>
+      <div class="panel"><div class="kv">
+        <div style="color:#38E1FF;font-weight:600;margin-bottom:6px;">Demand &amp; energy</div>
+        <div class="row"><span class="k">Contract demand</span><span class="val">4,732 kVA</span></div>
+        <div class="row"><span class="k">Billed demand</span><span class="val">3,549 kVA</span></div>
+        <div class="row"><span class="k">Highest recorded</span><span class="val">3,149 kVA</span></div>
+        <div class="row"><span class="k">Total drawal</span><span class="val">11,24,956 kWh</span></div>
+        <div class="row"><span class="k">kVAh billed</span><span class="val">3,63,446</span></div>
+        <div class="row"><span class="k">Reactive (RKVAH)</span><span class="val">1,01,453</span></div>
+        <div class="row"><span class="k">Power factor</span><span class="val">0.996</span></div>
+      </div></div>
+    </div>
+
+    <!-- WHY EACH MATTERS -->
+    <h2>Why each field matters for the chiller plant</h2>
+    <div class="h2sub">The plant is typically 40–60% of a mall's electricity, so these levers move real money.</div>
+
+    <div class="lever">
+      <div class="lt">Contract Demand (4,732 kVA) &amp; Demand Charges (₹21.3 L)</div>
+      <div class="ld">Demand charges are billed on your <b>peak kVA</b>, not energy — here ₹600 per kVA. The chiller compressors, pumps and tower fans are the biggest contributors to that peak. If several chillers stage up together on a hot afternoon, demand spikes; exceed the contract demand and you pay a penalty. <b>Smart staging, avoiding simultaneous compressor starts, and peak-shaving</b> keep billed demand down — trimming the peak by even 200 kVA saves ~₹1.2 lakh every month.</div>
+    </div>
+    <div class="lever">
+      <div class="lt">Energy billed in kVAh + Power Factor (0.996)</div>
+      <div class="ld">Note the energy charge (₹51 L) is on <b>kVAh (apparent energy)</b>, not pure kWh. Motors draw reactive power, so a poor power factor inflates kVAh and the bill. This plant runs a near-perfect <b>0.996 PF</b> — capacitor banks and VFDs are doing their job. Let PF slip to 0.90 and the same cooling would bill ~10% more kVAh.</div>
+    </div>
+    <div class="lever">
+      <div class="lt">Time-of-Day (TOD) tariff — slots A / B / C / D</div>
+      <div class="ld">Energy is priced differently by time slot (this bill: A 7,302 · B 15,957 · C 1,60,904 · D 1,77,830 units). Running chillers harder in cheap off-peak hours, <b>night pre-cooling, or thermal storage</b> shifts load off the expensive slots — a prime target for AI load-shifting.</div>
+    </div>
+    <div class="lever">
+      <div class="lt">Total kWh &amp; chiller efficiency (kW/ton)</div>
+      <div class="ld">The 11.25 lakh units drawn are dominated by the chiller plant. Every improvement in <b>kW/ton</b> (raising CHWS, tower optimization, staging, pump trimming, healthy ΔT — everything in this suite) scales directly onto this energy charge.</div>
+    </div>
+    <div class="lever">
+      <div class="lt">Open Access (solar 4,400 kVA + wind 2,550 kVA)</div>
+      <div class="ld">The plant's large, predictable load makes it worth buying cheaper <b>renewable power on Open Access</b> instead of full grid tariff. Solar/wind is injected and <b>banked</b> (8.99 lakh kWh injected, 7.63 lakh offset against drawal). The trade-off: open-access power carries <b>wheeling, transmission and cross-subsidy charges</b> (₹40 L, bill part B) to use the grid as a delivery network.</div>
+    </div>
+
+    <!-- POWER TRIANGLE -->
+    <h2>kW · kVAR · kVA · PF · APFC — the power triangle</h2>
+    <div class="h2sub">Why the same cooling can cost different amounts: it's about <i>how</i> the current is made up.</div>
+    <div class="panel">
+      <div class="grid g2">
+        <div class="tile"><div class="l">kW — real (active) power</div><div class="s" style="color:#B9D4E8;font-size:.88rem;line-height:1.6;margin-top:5px;">Useful work — compressing refrigerant, pumping water, spinning fans, making cooling. The only part that does a job; this is what registers as kWh.</div></div>
+        <div class="tile"><div class="l">kVAR — reactive power</div><div class="s" style="color:#B9D4E8;font-size:.88rem;line-height:1.6;margin-top:5px;">Sustains the magnetic fields inside motor windings &amp; transformers. Does no useful work — it sloshes to-and-fro — but inductive motors (compressors, pumps, fans) can't run without it.</div></div>
+        <div class="tile"><div class="l">kVA — apparent power</div><div class="s" style="color:#B9D4E8;font-size:.88rem;line-height:1.6;margin-top:5px;">The total burden the cables, transformer and utility must be sized for. The vector sum: <b>kVA² = kW² + kVAR²</b>. Demand is billed in kVA.</div></div>
+        <div class="tile"><div class="l">PF — power factor</div><div class="s" style="color:#B9D4E8;font-size:.88rem;line-height:1.6;margin-top:5px;"><b>PF = kW ÷ kVA</b> (cos θ). The fraction of the burden doing useful work. 1.0 is perfect; 0.8 means a fifth of capacity is carrying reactive power that does nothing.</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div style="color:#38E1FF;font-weight:600;margin-bottom:10px;">Try it: how power factor inflates the burden</div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
+        <svg viewBox="0 0 380 300" style="flex:1;min-width:280px;max-width:420px;" role="img" aria-label="Power triangle">
+          <line x1="60" y1="270" x2="300" y2="270" stroke="#38E1FF" stroke-width="4"/>
+          <line id="t-kvar" x1="300" y1="270" x2="300" y2="150" stroke="#FFB454" stroke-width="4"/>
+          <line id="t-kva" x1="60" y1="270" x2="300" y2="150" stroke="#2DD4BF" stroke-width="4"/>
+          <text x="180" y="290" text-anchor="middle" font-size="13" fill="#9FE6FF">kW (useful work)</text>
+          <text id="t-kvar-l" x="312" y="210" font-size="12" fill="#FFD9A0">kVAR</text>
+          <text id="t-kva-l" x="150" y="195" font-size="12" fill="#7FECD6" transform="rotate(-20,150,195)">kVA</text>
+          <text id="t-ang" x="92" y="262" font-size="11" fill="#A0D8FF">θ</text>
+        </svg>
+        <div style="flex:1;min-width:240px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+            <span style="color:#7DD3C0;font-size:.85rem;">Power factor</span>
+            <input type="range" id="pf" min="0.70" max="1.00" step="0.01" value="0.85" style="flex:1;accent-color:#38E1FF;">
+            <span id="pf-v" style="font-family:'IBM Plex Mono',monospace;font-weight:700;color:#E8F4FF;width:46px;text-align:right;">0.85</span>
+          </div>
+          <div class="grid g3">
+            <div class="tile"><div class="l">Useful (kW)</div><div class="v" style="font-size:1.05rem;">3,500</div></div>
+            <div class="tile"><div class="l">Burden (kVA)</div><div class="v" id="o-kva" style="font-size:1.05rem;">4,118</div></div>
+            <div class="tile"><div class="l">Reactive (kVAR)</div><div class="v" id="o-kvar" style="font-size:1.05rem;">2,170</div></div>
+            <div class="tile"><div class="l">Current vs PF 1.0</div><div class="v" id="o-cur" style="font-size:1.05rem;">+18%</div></div>
+            <div class="tile"><div class="l">Demand charge</div><div class="v" id="o-dem" style="font-size:1.05rem;">₹24.7 L</div></div>
+            <div class="tile"><div class="l">vs PF 1.0</div><div class="v" id="o-extra" style="font-size:1.05rem;color:#FFB454;">+₹3.7 L</div></div>
+          </div>
+        </div>
+      </div>
+      <p style="color:#B9D4E8;font-size:.88rem;line-height:1.6;margin-top:14px;">Useful work (kW) is held fixed at 3,500. As power factor falls, kVAR and kVA balloon — the plant draws more current and pays more demand charge for the <i>same cooling</i>. Slide to 0.996 (this plant's actual PF) and the burden collapses back onto the useful work.</p>
+    </div>
+
+    <div class="panel">
+      <div style="color:#38E1FF;font-weight:600;margin-bottom:8px;">APFC — Automatic Power Factor Correction</div>
+      <p style="color:#B9D4E8;font-size:.92rem;line-height:1.65;">An <b>APFC panel</b> is a capacitor bank plus a controller that automatically switches capacitors in and out to <b>supply the kVAR locally</b>. The motors draw their magnetizing current from the capacitors instead of the grid, so PF rises toward 1.0 and kVA (and current) shrink. On this bill, <b>PF = 0.996</b> with RKVAH of 1,01,453 logged — clear evidence a working APFC is installed and keeping the apparent power (the kVAh you're billed on) almost equal to the real work.</p>
+    </div>
+
+    <div class="panel" style="border-color:rgba(255,180,84,.4);background:rgba(255,180,84,.06);">
+      <div style="color:#FFB454;font-weight:600;margin-bottom:6px;">Which one drives high electricity consumption?</div>
+      <p style="color:#FFE7C4;font-size:.92rem;line-height:1.65;"><b>kW drives the real consumption</b> (the kWh you fundamentally pay for) — cut it with efficiency (kW/ton, staging, ΔT). <b>kVAR does no useful work</b> and isn't billed as real energy, but it inflates kVA and current, raising <b>billed demand (kVA), billed energy (kVAh) and cable losses</b> when PF is low. So: lower kW = less genuine consumption; higher PF (via APFC) = less avoidable inflation of the bill.</p>
+    </div>
+
+    <!-- CHARGES BREAKDOWN -->
+    <h2>Where the ₹1.33 crore goes</h2>
+    <div class="h2sub">Grouped by major component (approx).</div>
+    <div class="panel">
+      <div class="stack">
+        <div style="width:38.5%;background:#38E1FF;">Energy 38%</div>
+        <div style="width:24%;background:#9b8cff;">Duty 24%</div>
+        <div style="width:19.7%;background:#2DD4BF;">OA transport 20%</div>
+        <div style="width:16.0%;background:#FFB454;">Demand 16%</div>
+        <div style="width:2.1%;background:#7DD3C0;"></div>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:#38E1FF"></i> Energy charges ₹51.0 L</span>
+        <span><i class="sw" style="background:#9b8cff"></i> Electricity duty ₹31.7 L</span>
+        <span><i class="sw" style="background:#2DD4BF"></i> OA wheeling/transmission/CSS ₹26.1 L</span>
+        <span><i class="sw" style="background:#FFB454"></i> Demand charges ₹21.3 L</span>
+        <span><i class="sw" style="background:#7DD3C0"></i> TOD energy charge ₹2.9 L</span>
+      </div>
+      <table>
+        <tr><th>Line item</th><th>Amount</th><th>Lever</th></tr>
+        <tr><td>Energy charges (MSEDCL, kVAh @ ₹14.03)</td><td class="amt">₹50,99,147</td><td><span class="tag t-ctrl">controllable</span></td></tr>
+        <tr><td>Demand charges (3,549 kVA @ ₹600)</td><td class="amt">₹21,29,400</td><td><span class="tag t-ctrl">controllable</span></td></tr>
+        <tr><td>TOD tariff energy charge</td><td class="amt">₹2,86,261</td><td><span class="tag t-ctrl">controllable</span></td></tr>
+        <tr><td>Electricity duty (MSEDCL + OA)</td><td class="amt">₹31,74,872</td><td><span class="tag t-fix">statutory</span></td></tr>
+        <tr><td>OA cross-subsidy surcharge</td><td class="amt">₹8,75,204</td><td><span class="tag t-fix">OA-driven</span></td></tr>
+        <tr><td>OA transmission charges</td><td class="amt">₹8,73,272</td><td><span class="tag t-fix">OA-driven</span></td></tr>
+        <tr><td>Wheeling charges (MSEDCL + OA)</td><td class="amt">₹8,35,811</td><td><span class="tag t-fix">OA-driven</span></td></tr>
+        <tr><td>Tax on sale + FAC credit + operating + rebates (net)</td><td class="amt">₹-19,503</td><td><span class="tag t-fix">statutory</span></td></tr>
+        <tr><td><b>Total current bill</b></td><td class="amt"><b>₹1,32,54,460</b></td><td></td></tr>
+      </table>
+    </div>
+
+    <!-- TAKEAWAY -->
+    <h2>The takeaway</h2>
+    <div class="panel" style="line-height:1.7;color:#B9D4E8;font-size:.95rem;">
+      Roughly <b>three-quarters of this bill is influenced by how the chiller plant runs</b> — energy (efficiency), demand (staging &amp; peak), TOD (load-shifting) and power factor. The rest — electricity duty, taxes, and the wheeling / transmission / cross-subsidy charges that come with the Open Access arrangement — is largely fixed or policy-driven. So the optimization work in the rest of this suite isn't just about machine health; it lands straight on this ₹1.33-crore monthly invoice. <b>The chiller plant is the load; the electricity board is the meter that prices every decision it makes.</b>
+    </div>
+  </div>
+
+  <div class="footer">DeepManthan AI · Chiller Plant &amp; the Electricity Board · figures from MSEDCL bill JUL-2025</div>
+
+<script>
+  const KW = 3500, RATE = 600;
+  const pf = document.getElementById('pf');
+  const baseLen = 240, originX = 60, originY = 270, scale = baseLen / KW;
+  function fmtL(rs){ return '₹' + (rs/100000).toFixed(1) + ' L'; }
+  function pfUpdate(){
+    const p = +pf.value;
+    const kva = KW / p;
+    const kvar = Math.sqrt(Math.max(0, kva*kva - KW*KW));
+    const curr = (1/p - 1) * 100;
+    const dem = kva * RATE;
+    const demUnity = KW * RATE;
+    document.getElementById('pf-v').textContent = p.toFixed(2);
+    document.getElementById('o-kva').textContent = Math.round(kva).toLocaleString('en-IN');
+    document.getElementById('o-kvar').textContent = Math.round(kvar).toLocaleString('en-IN');
+    document.getElementById('o-cur').textContent = '+' + curr.toFixed(0) + '%';
+    document.getElementById('o-dem').textContent = fmtL(dem);
+    document.getElementById('o-extra').textContent = '+' + fmtL(dem - demUnity);
+    const h = Math.min(kvar * scale, 210);
+    const topY = originY - h;
+    document.getElementById('t-kvar').setAttribute('y2', topY);
+    document.getElementById('t-kva').setAttribute('y2', topY);
+    document.getElementById('t-kvar-l').setAttribute('y', originY - h/2);
+    document.getElementById('t-kva-l').setAttribute('y', topY + h/2 + 5);
+  }
+  pf.addEventListener('input', pfUpdate);
+  pfUpdate();
+</script>
+</body>
+</html>
